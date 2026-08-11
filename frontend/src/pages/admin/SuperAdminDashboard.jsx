@@ -1,0 +1,1291 @@
+import React, { useState, useEffect, useRef } from 'react';
+import API from '../../utils/api';
+import { useAuth } from '../../context/AuthContext';
+import StatusBadge from '../../components/StatusBadge';
+import MemberProfileTimelineView, { formatSchemeName, formatAppliedDateTime, getSchemeBgImage } from '../../components/MemberProfileTimelineView';
+import ReportsView from '../../components/ReportsView';
+import { useBjpSchemes, buildSchemeCards } from '../../utils/schemesData';
+import {
+  Shield, Users, Building, PhoneCall, RefreshCw, PlusCircle, Search, LogIn, Eye, Award, Share2, ChevronRight, FileText, CheckCircle2, AlertCircle
+} from 'lucide-react';
+import TopReferrersCard from '../../components/TopReferrersCard';
+import SchemePieChart from '../../components/SchemePieChart';
+import AssemblyPieChart from '../../components/AssemblyPieChart';
+import AdminSidebar from '../../components/AdminSidebar';
+import BoothPresidentRequestsView from '../../components/BoothPresidentRequestsView';
+import SchemesManagementView from '../../components/SchemesManagementView';
+import FlowImagesView from '../../components/FlowImagesView';
+
+
+
+const LIMIT = 20;
+
+const SuperAdminDashboard = () => {
+  const { admin, logoutAdmin } = useAuth();
+  const BJP_SCHEMES = useBjpSchemes();
+  const [subPage, setSubPage] = useState('dashboard');
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
+
+  // ── Stats ──
+  const [statsData, setStatsData] = useState(null);
+  const [loadingStats, setLoadingStats] = useState(true);
+
+  // ── Credentials State ──
+  const [adminList, setAdminList] = useState([]);
+  const [credSubTab, setCredSubTab] = useState('districts');
+  const [districtCredentials, setDistrictCredentials] = useState([]);
+  const [assemblyCredentials, setAssemblyCredentials] = useState([]);
+
+  // ── Booth Credentials ──
+  const [assembliesList, setAssembliesList] = useState([]);
+  const [selectedAssemblyNo, setSelectedAssemblyNo] = useState('1');
+  const [boothCredentialsData, setBoothCredentialsData] = useState(null);
+  const [boothSearchQuery, setBoothSearchQuery] = useState('');
+  const [loadingBooths, setLoadingBooths] = useState(false);
+  const [distCredSearch, setDistCredSearch] = useState('');
+  const [assCredSearch, setAssCredSearch] = useState('');
+
+  // ── Sub-page Pagination States ──
+  const [distCredPage, setDistCredPage] = useState(1);
+  const [assCredPage, setAssCredPage] = useState(1);
+  const [boothCredPage, setBoothCredPage] = useState(1);
+  const [distStatsPage, setDistStatsPage] = useState(1);
+  const [assStatsPage, setAssStatsPage] = useState(1);
+  const [boothStatsPage, setBoothStatsPage] = useState(1);
+
+  // ── Paginated Voters (Applications) ──
+  const [voters, setVoters] = useState([]);
+  const [loadingVoters, setLoadingVoters] = useState(false);
+  const [totalVoters, setTotalVoters] = useState(0);
+  const [totalApplications, setTotalApplications] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // ── Filters ──
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [schemeFilter, setSchemeFilter] = useState('');
+  const [districtFilter, setDistrictFilter] = useState('');
+  const [assemblyFilter, setAssemblyFilter] = useState('');
+  const [boothFilter, setBoothFilter] = useState('');
+
+  // ── Metadata Dropdown Lists ──
+  const [districts, setDistricts] = useState([]);
+  const [assemblies, setAssemblies] = useState([]);
+  const [booths, setBooths] = useState([]);
+  const [loadingFilterAssemblies, setLoadingFilterAssemblies] = useState(false);
+  const [loadingFilterBooths, setLoadingFilterBooths] = useState(false);
+
+  const [selectedVoterTimeline, setSelectedVoterTimeline] = useState(null);
+  const skipFilterResetRef = useRef(false);
+
+  // ── New Admin Form ──
+  const [newAdminForm, setNewAdminForm] = useState({
+    username: '', password: '', role: 'DISTRICT_ADMIN',
+    district: '', assemblyName: '', boothNo: ''
+  });
+  const [credSuccessMsg, setCredSuccessMsg] = useState('');
+  const [credErrorMsg, setCredErrorMsg] = useState('');
+
+  const navigateSubPage = (pageKey) => {
+    setSubPage(pageKey);
+    setSelectedVoterTimeline(null);
+    try { window.history.pushState({}, '', `/admin/superadmin/${pageKey}`); } catch (e) {}
+  };
+
+  // ── Fetch Initial Filter Metadata ──
+  const fetchInitialMeta = async () => {
+    try {
+      const res = await API.get('/admin/filter-meta');
+      if (res.data.success) {
+        setDistricts(res.data.districts || []);
+        setAssemblies(res.data.assemblies || []);
+        setBooths(res.data.booths || []);
+      }
+    } catch (err) {
+      console.error('Error fetching filter meta:', err);
+    }
+  };
+
+  // ── Fetch Assemblies for District ──
+  const fetchAssembliesForDistrict = async (dist) => {
+    if (!dist) { fetchInitialMeta(); return; }
+    try {
+      setLoadingFilterAssemblies(true);
+      const res = await API.get(`/admin/filter-meta?district=${encodeURIComponent(dist)}`);
+      if (res.data.success) {
+        setAssemblies(res.data.assemblies || []);
+        setBooths(res.data.booths || []);
+      }
+    } catch (err) {
+      console.error('Error loading assemblies for district:', err);
+    } finally {
+      setLoadingFilterAssemblies(false);
+    }
+  };
+
+  // ── Fetch Booths for Assembly ──
+  const fetchBoothsForAssembly = async (ass, dist) => {
+    if (!ass) { setBooths([]); return; }
+    try {
+      setLoadingFilterBooths(true);
+      const params = new URLSearchParams({ assemblyName: ass, ...(dist && { district: dist }) });
+      const res = await API.get(`/admin/filter-meta?${params}`);
+      if (res.data.success) setBooths(res.data.booths || []);
+    } catch (err) {
+      console.error('Error loading booths for assembly:', err);
+    } finally {
+      setLoadingFilterBooths(false);
+    }
+  };
+
+  // ── Fetch Overall Stats (Unfiltered for Overview Dashboard) ──
+  const fetchStats = async () => {
+    try {
+      setLoadingStats(true);
+      const res = await API.get('/admin/dashboard-stats');
+      if (res.data.success) setStatsData(res.data);
+    } catch (err) {
+      console.error('Error loading stats:', err);
+    } finally {
+      setLoadingStats(false);
+    }
+  };
+
+  // ── Fetch Paginated Voters ──
+  const fetchVoters = async (page = 1) => {
+    try {
+      setLoadingVoters(true);
+      const params = new URLSearchParams({
+        page, limit: LIMIT,
+        ...(searchQuery    && { search: searchQuery }),
+        ...(statusFilter   && { status: statusFilter }),
+        ...(schemeFilter   && { schemeName: schemeFilter }),
+        ...(districtFilter && { district: districtFilter }),
+        ...(assemblyFilter && { assemblyName: assemblyFilter }),
+        ...(boothFilter    && { boothNo: boothFilter })
+      });
+      const res = await API.get(`/admin/applications?${params}`);
+      if (res.data.success) {
+        setVoters(res.data.voters || []);
+        setTotalVoters(res.data.totalVoters || 0);
+        setTotalApplications(res.data.totalApplications || res.data.totalVoters || 0);
+        setTotalPages(res.data.totalPages || 1);
+        setCurrentPage(res.data.currentPage || 1);
+      }
+    } catch (err) {
+      console.error('Error loading voters:', err);
+    } finally {
+      setLoadingVoters(false);
+    }
+  };
+
+  // ── Fetch Logins & Meta ──
+  const fetchLoginsAndCreds = async () => {
+    try {
+      const [credRes, assRes, distCredRes, assCredRes] = await Promise.all([
+        API.get('/admin/credentials'),
+        API.get('/admin/jurisdiction-assemblies'),
+        API.get('/admin/jurisdiction-district-credentials'),
+        API.get('/admin/jurisdiction-assembly-credentials')
+      ]);
+      if (credRes.data.success) setAdminList(credRes.data.admins);
+      if (assRes.data.success) setAssembliesList(assRes.data.assemblies);
+      if (distCredRes.data.success) setDistrictCredentials(distCredRes.data.districts);
+      if (assCredRes.data.success) setAssemblyCredentials(assCredRes.data.assemblies);
+    } catch (err) {
+      console.error('Error loading logins & credentials:', err);
+    }
+  };
+
+  const fetchBoothCredentials = async (assemblyNo) => {
+    setLoadingBooths(true);
+    try {
+      const res = await API.get(`/admin/assembly-booth-credentials?assemblyNo=${assemblyNo}`);
+      if (res.data.success) setBoothCredentialsData(res.data.data);
+    } catch (err) {
+      console.error('Error loading booth credentials:', err);
+    } finally {
+      setLoadingBooths(false);
+    }
+  };
+
+  const fetchDashboardData = () => {
+    fetchStats();
+    fetchVoters(1);
+    fetchLoginsAndCreds();
+  };
+
+  useEffect(() => {
+    fetchInitialMeta();
+    fetchStats();
+    fetchLoginsAndCreds();
+  }, []);
+
+  useEffect(() => {
+    fetchVoters(1);
+    setCurrentPage(1);
+  }, [districtFilter, assemblyFilter, boothFilter, statusFilter, schemeFilter, searchQuery]);
+
+  useEffect(() => {
+    fetchAssembliesForDistrict(districtFilter);
+  }, [districtFilter]);
+
+  useEffect(() => {
+    fetchBoothsForAssembly(assemblyFilter, districtFilter);
+  }, [assemblyFilter, districtFilter]);
+
+  useEffect(() => {
+    if (subPage === 'logins' && credSubTab === 'booths' && selectedAssemblyNo) {
+      fetchBoothCredentials(selectedAssemblyNo);
+    }
+  }, [subPage, credSubTab, selectedAssemblyNo]);
+
+  const handleCreateCredential = async (e) => {
+    e.preventDefault();
+    setCredSuccessMsg(''); setCredErrorMsg('');
+    try {
+      const res = await API.post('/admin/create-credential', newAdminForm);
+      if (res.data.success) {
+        setCredSuccessMsg(`Credential '${res.data.admin.username}' created successfully!`);
+        setNewAdminForm({ username: '', password: '', role: 'DISTRICT_ADMIN', district: '', assemblyName: '', boothNo: '' });
+        fetchDashboardData();
+      }
+    } catch (err) {
+      setCredErrorMsg(err.response?.data?.message || 'Failed to create admin credential');
+    }
+  };
+
+  const handleUpdateAppStatus = async (appId, updatePayload) => {
+    try {
+      const res = await API.put(`/admin/applications/${appId}/status`, updatePayload);
+      if (res.data.success) { fetchStats(); fetchVoters(currentPage); }
+    } catch (err) { console.error('Error updating status:', err); }
+  };
+
+  const handleDirectCallVoter = async (voter) => {
+    const latestApp = voter.applications?.[0] || voter.applications?.[voter.applications.length - 1];
+    window.location.href = `tel:${voter.mobile}`;
+    if (latestApp) {
+      await handleUpdateAppStatus(latestApp._id, {
+        status: 'Called',
+        notes: `Follow-up call to ${voter.voterName} (${voter.mobile})`,
+        isCallAction: true
+      });
+    }
+  };
+
+  const handleQuickApprove = async (voter) => {
+    const latestApp = voter.applications?.[0] || voter.applications?.[voter.applications.length - 1];
+    const appId = latestApp?._id || voter._id;
+    try {
+      await handleUpdateAppStatus(appId, {
+        status: 'Approved',
+        notes: `Application approved by Super Admin`
+      });
+      setVoters(prev => prev.map(v => {
+        if (v._id === voter._id || v.mobile === voter.mobile) {
+          const updatedApps = (v.applications || []).map(a => ({ ...a, status: 'Approved' }));
+          return { ...v, applications: updatedApps, status: 'Approved' };
+        }
+        return v;
+      }));
+    } catch (err) {
+      console.error('Approve error:', err);
+    }
+  };
+
+  const handleQuickReject = async (voter) => {
+    const latestApp = voter.applications?.[0] || voter.applications?.[voter.applications.length - 1];
+    const appId = latestApp?._id || voter._id;
+    try {
+      await handleUpdateAppStatus(appId, {
+        status: 'Rejected',
+        notes: `Application rejected by Super Admin`
+      });
+      setVoters(prev => prev.map(v => {
+        if (v._id === voter._id || v.mobile === voter.mobile) {
+          const updatedApps = (v.applications || []).map(a => ({ ...a, status: 'Rejected' }));
+          return { ...v, applications: updatedApps, status: 'Rejected' };
+        }
+        return v;
+      }));
+    } catch (err) {
+      console.error('Reject error:', err);
+    }
+  };
+
+  const handleQuickSwitch = async (usr, pwd) => {
+    try {
+      const res = await API.post('/admin/login', { username: usr, password: pwd });
+      if (res.data.success) loginAdmin(res.data.admin, res.data.token);
+    } catch (err) { console.error('Switch error:', err); }
+  };
+
+  const filteredBooths = boothCredentialsData?.boothLogins?.filter(b => {
+    if (!boothSearchQuery) return true;
+    return b.boothNo.includes(boothSearchQuery) || b.username.includes(boothSearchQuery.toLowerCase()) || b.passcode.includes(boothSearchQuery);
+  }) || [];
+
+  // ── District / Assembly credential search filters ──
+  const _distQ = distCredSearch.trim().toLowerCase();
+  const filteredDistrictCreds = _distQ
+    ? districtCredentials.filter(d =>
+        (d.district || '').toLowerCase().includes(_distQ) ||
+        (d.username || '').toLowerCase().includes(_distQ) ||
+        String(d.passcode || '').toLowerCase().includes(_distQ))
+    : districtCredentials;
+
+  const _assQ = assCredSearch.trim().toLowerCase();
+  const filteredAssemblyCreds = _assQ
+    ? assemblyCredentials.filter(a =>
+        (a.assemblyName || '').toLowerCase().includes(_assQ) ||
+        String(a.assemblyNo || '').toLowerCase().includes(_assQ) ||
+        (a.district || '').toLowerCase().includes(_assQ) ||
+        (a.username || '').toLowerCase().includes(_assQ) ||
+        String(a.passcode || '').toLowerCase().includes(_assQ))
+    : assemblyCredentials;
+
+  const getPageRange = () => {
+    const range = [];
+    const delta = 2;
+    const left = Math.max(1, currentPage - delta);
+    const right = Math.min(totalPages, currentPage + delta);
+    if (left > 1) { range.push(1); if (left > 2) range.push('...'); }
+    for (let i = left; i <= right; i++) range.push(i);
+    if (right < totalPages) { if (right < totalPages - 1) range.push('...'); range.push(totalPages); }
+    return range;
+  };
+
+  const renderPagination = (page, totalItems, itemsPerPage, onPageChange) => {
+    const totalP = Math.ceil(totalItems / itemsPerPage);
+    if (totalP <= 1) return null;
+
+    const startItem = (page - 1) * itemsPerPage + 1;
+    const endItem = Math.min(page * itemsPerPage, totalItems);
+
+    const range = [];
+    const delta = 2;
+    const left = Math.max(1, page - delta);
+    const right = Math.min(totalP, page + delta);
+    if (left > 1) { range.push(1); if (left > 2) range.push('...'); }
+    for (let i = left; i <= right; i++) range.push(i);
+    if (right < totalP) { if (right < totalP - 1) range.push('...'); range.push(totalP); }
+
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', marginTop: '16px', paddingTop: '12px', borderTop: '1px solid var(--color-linen)', fontSize: '13px', color: 'var(--color-slate)' }}>
+        <div>
+          Showing <strong>{startItem}</strong> – <strong>{endItem}</strong> of <strong>{totalItems}</strong> entries
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <button
+            onClick={() => onPageChange(page - 1)}
+            disabled={page === 1}
+            className="btn btn-ghost"
+            style={{ padding: '4px 10px', fontSize: '12px', opacity: page === 1 ? 0.4 : 1 }}
+          >
+            ← Prev
+          </button>
+
+          {range.map((p, idx) => (
+            <button
+              key={idx}
+              disabled={p === '...'}
+              onClick={() => typeof p === 'number' && onPageChange(p)}
+              className={`btn ${p === page ? 'btn-primary' : 'btn-ghost'}`}
+              style={{
+                padding: '4px 10px',
+                fontSize: '12px',
+                fontWeight: p === page ? '700' : '500',
+                minWidth: '32px'
+              }}
+            >
+              {p}
+            </button>
+          ))}
+
+          <button
+            onClick={() => onPageChange(page + 1)}
+            disabled={page === totalP}
+            className="btn btn-ghost"
+            style={{ padding: '4px 10px', fontSize: '12px', opacity: page === totalP ? 0.4 : 1 }}
+          >
+            Next →
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  const activeScopeText = 'Super Admin Governance';
+
+  return (
+    <div className="admin-layout">
+      <AdminSidebar
+        activeTab={subPage}
+        onSelectTab={navigateSubPage}
+        admin={admin || { role: 'SUPER_ADMIN', username: 'Super Admin' }}
+        isCollapsed={isSidebarCollapsed}
+        onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+        onLogout={logoutAdmin}
+      />
+
+      <div className="admin-main">
+        {/* Sticky Topbar */}
+        <header className="admin-topbar">
+          <div className="admin-topbar-brand">
+            Super Admin Control Portal
+          </div>
+
+          <div className="admin-topbar-right">
+            <span className="tag-pill tag-active" style={{ fontSize: '13px', background: 'var(--color-canvas)', color: 'var(--color-primary-ink)' }}>
+              <Shield size={12} style={{ marginRight: '4px' }} /> {activeScopeText}
+            </span>
+
+            <button onClick={fetchDashboardData} className="btn-action btn-view" style={{ padding: '8px 16px', fontSize: '13px' }}>
+              <RefreshCw size={14} /> Refresh Data
+            </button>
+          </div>
+        </header>
+
+        {/* Content Area */}
+        <main className="admin-content">
+
+
+      {/* ══════════════════════════════════════════ */}
+      {/* PAGE 1: OVERVIEW DASHBOARD                */}
+      {/* ══════════════════════════════════════════ */}
+      {subPage === 'dashboard' && (
+        loadingStats ? (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px 24px', gap: '16px' }}>
+            <div style={{ width: '40px', height: '40px', border: '4px solid var(--color-linen)', borderTopColor: 'var(--color-saffron)', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+            <div style={{ fontSize: '14px', color: 'var(--color-slate)', fontWeight: '500' }}>Loading Super Admin Portal stats...</div>
+            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+          </div>
+        ) : statsData ? (
+          <div style={{ width: '100%', boxSizing: 'border-box' }}>
+
+            {/* ── 4 Candidate Lead Stat Cards ── */}
+            <div className="stat-cards-grid">
+
+              {/* Card 1: Total Candidate Leads */}
+              <div
+                className="stat-card"
+                onClick={() => navigateSubPage('applications')}
+                style={{ cursor: 'pointer' }}
+                title="Click to view all candidate lead applications"
+              >
+                <div className="stat-icon" style={{ background: '#fff7ed', color: 'var(--color-saffron)' }}>
+                  <Users size={20} />
+                </div>
+                <div style={{ width: '100%' }}>
+                  <div className="stat-number" style={{ color: 'var(--color-saffron)' }}>
+                    {voters.length || totalApplications || 2}
+                  </div>
+                  <div className="stat-label">Total Candidate Leads</div>
+                  <div className="stat-sub" style={{ color: 'var(--color-saffron)', fontWeight: '600' }}>Active Candidate Applications</div>
+                </div>
+              </div>
+
+              {/* Card 2: Total Voters in Electoral Roll */}
+              <div className="stat-card">
+                <div className="stat-icon" style={{ background: '#eff6ff', color: '#2563eb' }}>
+                  <Shield size={20} />
+                </div>
+                <div style={{ width: '100%' }}>
+                  <div className="stat-number" style={{ color: '#2563eb' }}>
+                    13,72,959
+                  </div>
+                  <div className="stat-label">Total Voters in Roll</div>
+                  <div className="stat-sub">Electoral Roll (Voter DB)</div>
+                </div>
+              </div>
+
+              {/* Card 3: Active District */}
+              <div className="stat-card">
+                <div className="stat-icon" style={{ background: '#f0fdf4', color: '#16a34a' }}>
+                  <Building size={20} />
+                </div>
+                <div style={{ width: '100%' }}>
+                  <div className="stat-number" style={{ color: '#16a34a', fontSize: '20px' }}>
+                    Thiruvallur
+                  </div>
+                  <div className="stat-label">District Scope</div>
+                  <div className="stat-sub">Active Registration District</div>
+                </div>
+              </div>
+
+              {/* Card 4: Positions Contested */}
+              <div className="stat-card">
+                <div className="stat-icon" style={{ background: '#faf5ff', color: '#9333ea' }}>
+                  <FileText size={20} />
+                </div>
+                <div style={{ width: '100%' }}>
+                  <div className="stat-number" style={{ color: '#9333ea', fontSize: '20px' }}>
+                    2 Positions
+                  </div>
+                  <div className="stat-label">Positions Contested</div>
+                  <div className="stat-sub">Town Panchayat, Ward Member</div>
+                </div>
+              </div>
+
+            </div>
+
+            {/* ── Active Candidate Leads Summary ── */}
+            <div className="campsite-card" style={{ width: '100%', padding: '24px', boxSizing: 'border-box', marginTop: '20px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+                <div>
+                  <h3 style={{ fontSize: '18px', fontWeight: '700', color: 'var(--color-midnight-ink)', margin: 0 }}>
+                    Candidate Registrations (Current Leads)
+                  </h3>
+                  <p style={{ fontSize: '13px', color: 'var(--color-slate)', margin: '4px 0 0 0' }}>
+                    Real-time candidate registrations submitted through the 12-step portal
+                  </p>
+                </div>
+                <button
+                  onClick={() => navigateSubPage('applications')}
+                  className="btn-action btn-view"
+                  style={{ padding: '8px 18px', fontSize: '13px', fontWeight: '700', background: 'var(--color-saffron)', color: '#fff' }}
+                >
+                  View All Applications ({voters.length || 2}) →
+                </button>
+              </div>
+
+              {/* Candidate Leads Table Summary */}
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
+                  <thead>
+                    <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0', textAlign: 'left' }}>
+                      <th style={{ padding: '12px 16px', fontWeight: '700', color: '#475569' }}>Candidate Name</th>
+                      <th style={{ padding: '12px 16px', fontWeight: '700', color: '#475569' }}>Mobile Number</th>
+                      <th style={{ padding: '12px 16px', fontWeight: '700', color: '#475569' }}>EPIC Card No</th>
+                      <th style={{ padding: '12px 16px', fontWeight: '700', color: '#475569' }}>District</th>
+                      <th style={{ padding: '12px 16px', fontWeight: '700', color: '#475569' }}>Position Contested</th>
+                      <th style={{ padding: '12px 16px', fontWeight: '700', color: '#475569' }}>Status</th>
+                      <th style={{ padding: '12px 16px', fontWeight: '700', color: '#475569', textAlign: 'right' }}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {voters.map((v, i) => (
+                      <tr key={v._id || i} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                        <td style={{ padding: '14px 16px', fontWeight: '700', color: '#0f172a' }}>{v.voterName}</td>
+                        <td style={{ padding: '14px 16px', fontFamily: 'monospace', fontWeight: '600' }}>{v.mobile}</td>
+                        <td style={{ padding: '14px 16px', fontFamily: 'monospace', color: '#d97706', fontWeight: '700' }}>{v.epicNo || 'N/A'}</td>
+                        <td style={{ padding: '14px 16px', fontWeight: '600' }}>{v.district || 'Thiruvallur'}</td>
+                        <td style={{ padding: '14px 16px', fontWeight: '600', color: '#2563eb' }}>{v.position || v.applications?.[0]?.schemeName || 'Candidate'}</td>
+                        <td style={{ padding: '14px 16px' }}>
+                          <StatusBadge status={v.status || v.applications?.[0]?.status || 'Submitted'} />
+                        </td>
+                        <td style={{ padding: '14px 16px', textAlign: 'right' }}>
+                          <div style={{ display: 'inline-flex', gap: '6px', alignItems: 'center' }}>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setSelectedVoterTimeline(v); navigateSubPage('applications'); }}
+                              style={{ padding: '5px 10px', fontSize: '12px', background: '#eff6ff', color: '#2563eb', border: '1px solid #bfdbfe', borderRadius: '6px', fontWeight: '700', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                              title="View full 12-step registration application details"
+                            >
+                              <Eye size={13} /> View
+                            </button>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleDirectCallVoter(v); }}
+                              className="btn btn-ghost"
+                              style={{ padding: '5px 10px', fontSize: '12px', borderRadius: '6px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                            >
+                              <PhoneCall size={13} /> Call
+                            </button>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleQuickApprove(v); }}
+                              style={{ padding: '5px 10px', fontSize: '12px', background: '#dcfce7', color: '#15803d', border: '1px solid #86efac', borderRadius: '6px', fontWeight: '700', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                            >
+                              <CheckCircle2 size={13} /> Approve
+                            </button>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleQuickReject(v); }}
+                              style={{ padding: '5px 10px', fontSize: '12px', background: '#fee2e2', color: '#b91c1c', border: '1px solid #fca5a5', borderRadius: '6px', fontWeight: '700', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                            >
+                              <AlertCircle size={13} /> Reject
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* ── Assembly Registration Speed Donut Pie Chart ── */}
+            <AssemblyPieChart voters={voters} />
+
+          </div>
+        ) : (
+          <div style={{ padding: '40px', textAlign: 'center', color: 'var(--color-slate)' }}>No dashboard data available.</div>
+        )
+      )}
+
+      {/* ══════════════════════════════════════════ */}
+      {/* PAGE 2: SCHEME APPLICATIONS                */}
+      {/* ══════════════════════════════════════════ */}
+      {subPage === 'applications' && (
+        selectedVoterTimeline ? (
+          <MemberProfileTimelineView
+            voterData={selectedVoterTimeline}
+            onBack={() => setSelectedVoterTimeline(null)}
+            onUpdateAppStatus={handleUpdateAppStatus}
+            onSelectVoter={(voter) => setSelectedVoterTimeline(voter)}
+          />
+        ) : (
+          <div className="campsite-card" style={{ width: '100%', padding: '24px', boxSizing: 'border-box' }}>
+            {/* ── Filters Row 1: Search + Header Stats ── */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', marginBottom: '14px' }}>
+              <div style={{ flex: '1 1 300px', minWidth: '240px', position: 'relative' }}>
+                <Search style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-slate)' }} size={16} />
+                <input
+                  type="text"
+                  placeholder="Search by Candidate Name, EPIC, Mobile, or Position..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="form-control"
+                  style={{ paddingLeft: '38px' }}
+                />
+              </div>
+              <div style={{ fontSize: '13px', color: 'var(--color-slate)', whiteSpace: 'nowrap' }}>
+                {loadingVoters
+                  ? <span style={{ opacity: 0.6 }}>Loading…</span>
+                  : <>
+                      <strong style={{ color: 'var(--color-midnight-ink)' }}>
+                        {voters.length} Candidate Applications
+                      </strong> · Page {currentPage} of {totalPages}
+                    </>
+                }
+              </div>
+            </div>
+
+            {/* ── Filters Row 2: District + Assembly + Booth + Status + Clear All ── */}
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '18px', width: '100%', alignItems: 'center', background: 'var(--color-fog-gray)', padding: '12px', borderRadius: '10px', border: '1px solid var(--color-linen)' }}>
+
+              {/* District Filter */}
+              <select
+                value={districtFilter}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setDistrictFilter(val);
+                  setAssemblyFilter('');
+                  setBoothFilter('');
+                }}
+                className="admin-filter-select"
+                style={{ flex: '1 1 160px', minWidth: '160px' }}
+              >
+                <option value="">All Districts (State-wide)</option>
+                {districts.map(d => (
+                  <option key={d} value={d}>{d}</option>
+                ))}
+              </select>
+
+              {/* Assembly Filter */}
+              <select
+                value={assemblyFilter}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setAssemblyFilter(val);
+                  setBoothFilter('');
+                }}
+                className="admin-filter-select"
+                disabled={loadingFilterAssemblies}
+                style={{ flex: '1 1 160px', minWidth: '160px' }}
+              >
+                <option value="">{loadingFilterAssemblies ? 'Loading assemblies…' : 'All Assemblies'}</option>
+                {assemblies.map(a => (
+                  <option key={a} value={a}>{a}</option>
+                ))}
+              </select>
+
+              {/* Booth Filter */}
+              <select
+                value={boothFilter}
+                onChange={(e) => setBoothFilter(e.target.value)}
+                className="admin-filter-select"
+                disabled={loadingFilterBooths}
+                style={{ flex: '1 1 140px', minWidth: '140px' }}
+              >
+                <option value="">{loadingFilterBooths ? 'Loading booths…' : 'All Booths'}</option>
+                {booths.map(b => (
+                  <option key={b} value={b}>Booth {b}</option>
+                ))}
+                {boothFilter && !booths.includes(boothFilter) && (
+                  <option key={boothFilter} value={boothFilter}>Booth {boothFilter}</option>
+                )}
+              </select>
+
+              {/* Status Filter */}
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="admin-filter-select"
+                style={{ flex: '1 1 150px', minWidth: '150px' }}
+              >
+                <option value="">All Statuses</option>
+                <option value="Pending">Pending</option>
+                <option value="Submitted">Submitted</option>
+                <option value="Processing">Processing</option>
+                <option value="Called">Called</option>
+                <option value="Verified">Verified</option>
+                <option value="Approved">Approved</option>
+                <option value="Completed">Completed</option>
+                <option value="Rejected">Rejected</option>
+              </select>
+
+              {/* Clear All button */}
+              {(districtFilter || assemblyFilter || boothFilter || statusFilter || searchQuery) && (
+                <button
+                  onClick={() => {
+                    setDistrictFilter(''); setAssemblyFilter(''); setBoothFilter('');
+                    setStatusFilter(''); setSearchQuery('');
+                  }}
+                  style={{
+                    background: '#fff', border: '1px solid var(--color-linen)',
+                    borderRadius: '8px', padding: '6px 14px', fontSize: '12px',
+                    color: 'var(--color-slate)', cursor: 'pointer', whiteSpace: 'nowrap', fontWeight: '600'
+                  }}
+                >
+                  Clear All
+                </button>
+              )}
+            </div>
+
+            {/* ── Table ── */}
+            <div style={{ width: '100%', overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                <thead>
+                  <tr style={{ borderBottom: '2px solid var(--color-linen)', color: 'var(--color-slate)', textAlign: 'left', background: 'var(--color-fog-gray)' }}>
+                    <th style={{ padding: '12px 10px' }}>#</th>
+                    <th style={{ padding: '12px 10px' }}>Candidate &amp; EPIC</th>
+                    <th style={{ padding: '12px 10px' }}>Mobile</th>
+                    <th style={{ padding: '12px 10px' }}>Position Contested</th>
+                    <th style={{ padding: '12px 10px' }}>Applied Date &amp; Time</th>
+                    <th style={{ padding: '12px 10px' }}>District / Assembly / Booth</th>
+                    <th style={{ padding: '12px 10px' }}>Latest Status</th>
+                    <th style={{ padding: '12px 10px', textAlign: 'right' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loadingVoters ? (
+                    Array.from({ length: 8 }).map((_, i) => (
+                      <tr key={i} style={{ borderBottom: '1px solid var(--color-linen)' }}>
+                        {Array.from({ length: 8 }).map((_, j) => (
+                          <td key={j} style={{ padding: '14px 10px' }}>
+                            <div style={{ height: '14px', borderRadius: '6px', background: 'var(--color-linen)', animation: 'pulse 1.4s ease-in-out infinite', width: j === 0 ? '24px' : j === 1 ? '80%' : '60%' }} />
+                          </td>
+                        ))}
+                      </tr>
+                    ))
+                  ) : voters.length === 0 ? (
+                    <tr>
+                      <td colSpan={8} style={{ padding: '40px', textAlign: 'center', color: 'var(--color-slate)' }}>
+                        <div style={{ fontSize: '32px', marginBottom: '8px' }}>🔍</div>
+                        No candidate applications found matching criteria.
+                      </td>
+                    </tr>
+                  ) : (
+                    voters.map((voter, idx) => {
+                      const latestApp = voter.applications?.[0] || voter.applications?.[voter.applications.length - 1];
+                      const rowNum = (currentPage - 1) * LIMIT + idx + 1;
+                      return (
+                        <tr key={voter.epicNo || idx}
+                          style={{ borderBottom: '1px solid var(--color-linen)', transition: 'background 0.15s', cursor: 'pointer' }}
+                          onClick={() => setSelectedVoterTimeline(voter)}
+                          onMouseEnter={e => e.currentTarget.style.background = 'var(--color-fog-gray)'}
+                          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                          title="Click anywhere on row to view details"
+                        >
+                          <td style={{ padding: '12px 10px', color: 'var(--color-ash-gray)', fontSize: '12px', fontWeight: '600' }}>{rowNum}</td>
+                          <td style={{ padding: '12px 10px' }}>
+                            <div style={{ fontWeight: '700', color: 'var(--color-midnight-ink)' }}>{voter.voterName}</div>
+                            <div style={{ fontSize: '11px', color: '#d97706', fontFamily: 'monospace', fontWeight: '700' }}>{voter.epicNo || 'N/A'}</div>
+                          </td>
+                          <td style={{ padding: '12px 10px', fontWeight: '600' }}>{voter.mobile}</td>
+                          <td style={{ padding: '12px 10px' }}>
+                            <span className="tag-pill tag-sunlit" style={{ fontWeight: '700', fontSize: '11px', padding: '4px 10px', background: '#eff6ff', color: '#2563eb', border: '1px solid #bfdbfe' }}>
+                              <Award size={12} style={{ marginRight: '4px' }} /> {voter.position || latestApp?.schemeName || 'Candidate'}
+                            </span>
+                          </td>
+                          <td style={{ padding: '12px 10px', fontSize: '12px', color: 'var(--color-midnight-ink)', whiteSpace: 'nowrap' }}>
+                            <div style={{ fontWeight: '600' }}>
+                              {formatAppliedDateTime(latestApp?.appliedAt || latestApp?.createdAt || voter.createdAt)}
+                            </div>
+                          </td>
+                          <td style={{ padding: '12px 10px', color: 'var(--color-midnight-ink)' }}>
+                            {voter.district || 'Thiruvallur'} · {voter.assemblyName} · <strong>Booth {voter.boothNo}</strong>
+                          </td>
+                          <td style={{ padding: '12px 10px' }}>
+                            <StatusBadge status={latestApp?.status || 'Submitted'} />
+                          </td>
+                          <td style={{ padding: '12px 10px', textAlign: 'right' }}>
+                            <div style={{ display: 'inline-flex', gap: '6px', alignItems: 'center' }}>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); setSelectedVoterTimeline(voter); }}
+                                style={{ padding: '5px 10px', fontSize: '12px', background: '#eff6ff', color: '#2563eb', border: '1px solid #bfdbfe', borderRadius: '6px', fontWeight: '700', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                                title="View full 12-step registration application details"
+                              >
+                                <Eye size={13} /> View
+                              </button>
+
+                              <button
+                                onClick={(e) => { e.stopPropagation(); handleDirectCallVoter(voter); }}
+                                className="btn btn-ghost"
+                                style={{ padding: '5px 10px', fontSize: '12px', borderRadius: '6px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                              >
+                                <PhoneCall size={13} /> Call
+                              </button>
+
+                              <button
+                                onClick={(e) => { e.stopPropagation(); handleQuickApprove(voter); }}
+                                style={{ padding: '5px 10px', fontSize: '12px', background: '#dcfce7', color: '#15803d', border: '1px solid #86efac', borderRadius: '6px', fontWeight: '700', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                              >
+                                <CheckCircle2 size={13} /> Approve
+                              </button>
+
+                              <button
+                                onClick={(e) => { e.stopPropagation(); handleQuickReject(voter); }}
+                                style={{ padding: '5px 10px', fontSize: '12px', background: '#fee2e2', color: '#b91c1c', border: '1px solid #fca5a5', borderRadius: '6px', fontWeight: '700', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                              >
+                                <AlertCircle size={13} /> Reject
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* ── Pagination Controls ── */}
+            {!loadingVoters && totalPages > 1 && (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginTop: '24px', flexWrap: 'wrap' }}>
+                <button
+                  onClick={() => { const p = currentPage - 1; setCurrentPage(p); fetchVoters(p); }}
+                  disabled={currentPage === 1}
+                  className="btn btn-ghost"
+                  style={{ padding: '6px 14px', fontSize: '13px', opacity: currentPage === 1 ? 0.4 : 1 }}
+                >← Prev</button>
+
+                {getPageRange().map((item, i) =>
+                  item === '...' ? (
+                    <span key={`e-${i}`} style={{ padding: '6px 4px', color: 'var(--color-ash-gray)', fontSize: '13px' }}>…</span>
+                  ) : (
+                    <button
+                      key={item}
+                      onClick={() => { setCurrentPage(item); fetchVoters(item); }}
+                      className="btn"
+                      style={{
+                        padding: '6px 12px', fontSize: '13px',
+                        fontWeight: item === currentPage ? '700' : '500',
+                        background: item === currentPage ? 'var(--color-saffron)' : 'transparent',
+                        color: item === currentPage ? 'var(--color-midnight-ink)' : 'var(--color-slate)',
+                        border: item === currentPage ? '1.5px solid var(--color-saffron)' : '1.5px solid var(--color-linen)',
+                        borderRadius: '8px', minWidth: '36px'
+                      }}
+                    >{item}</button>
+                  )
+                )}
+
+                <button
+                  onClick={() => { const p = currentPage + 1; setCurrentPage(p); fetchVoters(p); }}
+                  disabled={currentPage === totalPages}
+                  className="btn btn-ghost"
+                  style={{ padding: '6px 14px', fontSize: '13px', opacity: currentPage === totalPages ? 0.4 : 1 }}
+                >Next →</button>
+
+                <style>{`@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }`}</style>
+              </div>
+            )}
+          </div>
+        )
+      )}
+
+      {/* ══════════════════════════════════════════ */}
+      {/* PAGE 3: LOGINS MANAGER                     */}
+      {/* ══════════════════════════════════════════ */}
+      {subPage === 'logins' && (
+        <div style={{ width: '100%', boxSizing: 'border-box' }}>
+          <div className="tabs-header" style={{ width: '100%', marginBottom: '20px', background: 'var(--color-fog-gray)', padding: '6px', borderRadius: '10px' }}>
+            <button onClick={() => setCredSubTab('districts')} className={`tab-btn ${credSubTab === 'districts' ? 'active' : ''}`} style={{ padding: '8px 16px', fontSize: '13px' }}>
+              District Admin Passcodes ({districtCredentials.length})
+            </button>
+            <button onClick={() => setCredSubTab('assemblies')} className={`tab-btn ${credSubTab === 'assemblies' ? 'active' : ''}`} style={{ padding: '8px 16px', fontSize: '13px' }}>
+              Assembly Admin Passcodes ({assemblyCredentials.length})
+            </button>
+            <button onClick={() => setCredSubTab('booths')} className={`tab-btn ${credSubTab === 'booths' ? 'active' : ''}`} style={{ padding: '8px 16px', fontSize: '13px' }}>
+              Polling Booth Passcodes (By Assembly)
+            </button>
+          </div>
+
+          {/* Sub-Tab 1: District Credentials */}
+          {credSubTab === 'districts' && (
+            <div className="campsite-card" style={{ width: '100%', padding: '24px', boxSizing: 'border-box' }}>
+              <h3 style={{ fontSize: '18px', fontWeight: '700', color: 'var(--color-midnight-ink)', marginBottom: '16px' }}>
+                Statewide District Admin Passcodes &amp; Quick Access
+              </h3>
+              <div style={{ marginBottom: '16px' }}>
+                <input
+                  type="text"
+                  placeholder="Search by district, username or passcode..."
+                  value={distCredSearch}
+                  onChange={(e) => { setDistCredSearch(e.target.value); setDistCredPage(1); }}
+                  className="form-control"
+                  style={{ maxWidth: '360px' }}
+                />
+                {distCredSearch && (
+                  <span style={{ marginLeft: '12px', fontSize: '13px', color: 'var(--color-slate)' }}>
+                    {filteredDistrictCreds.length} result(s)
+                  </span>
+                )}
+              </div>
+              <div style={{ width: '100%', overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '2px solid var(--color-linen)', color: 'var(--color-slate)', textAlign: 'left', background: 'var(--color-fog-gray)' }}>
+                      <th style={{ padding: '10px 12px' }}>DISTRICT NAME</th>
+                      <th style={{ padding: '10px 12px' }}>TOTAL ASSEMBLIES</th>
+                      <th style={{ padding: '10px 12px' }}>USERNAME</th>
+                      <th style={{ padding: '10px 12px' }}>PASSCODE</th>
+                      <th style={{ padding: '10px 12px', textAlign: 'right' }}>QUICK LOGIN</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredDistrictCreds.slice((distCredPage - 1) * 10, distCredPage * 10).map((dist) => (
+                      <tr key={dist.username} style={{ borderBottom: '1px solid var(--color-linen)' }}>
+                        <td style={{ padding: '12px', fontWeight: '700', color: 'var(--color-midnight-ink)' }}>{dist.district}</td>
+                        <td style={{ padding: '12px', fontWeight: '600' }}>{dist.assembliesCount} Assemblies</td>
+                        <td style={{ padding: '12px', fontFamily: 'monospace', fontWeight: '600', color: 'var(--color-slate)' }}>{dist.username}</td>
+                        <td style={{ padding: '12px', fontFamily: 'monospace', fontWeight: '700', color: 'var(--color-saffron)' }}>{dist.passcode}</td>
+                        <td style={{ padding: '12px', textAlign: 'right' }}>
+                          <button onClick={() => handleQuickSwitch(dist.username, dist.passcode)} className="btn btn-ghost" style={{ padding: '5px 12px', fontSize: '12px', fontWeight: '700' }}>
+                            <LogIn size={13} /> Switch Login
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {renderPagination(distCredPage, filteredDistrictCreds.length, 10, setDistCredPage)}
+            </div>
+          )}
+
+          {/* Sub-Tab 2: Assembly Credentials */}
+          {credSubTab === 'assemblies' && (
+            <div className="campsite-card" style={{ width: '100%', padding: '24px', boxSizing: 'border-box' }}>
+              <h3 style={{ fontSize: '18px', fontWeight: '700', color: 'var(--color-midnight-ink)', marginBottom: '16px' }}>
+                All 234 Assembly Constituency Passcodes
+              </h3>
+              <div style={{ marginBottom: '16px' }}>
+                <input
+                  type="text"
+                  placeholder="Search by assembly name, no, district, username or passcode..."
+                  value={assCredSearch}
+                  onChange={(e) => { setAssCredSearch(e.target.value); setAssCredPage(1); }}
+                  className="form-control"
+                  style={{ maxWidth: '420px' }}
+                />
+                {assCredSearch && (
+                  <span style={{ marginLeft: '12px', fontSize: '13px', color: 'var(--color-slate)' }}>
+                    {filteredAssemblyCreds.length} result(s)
+                  </span>
+                )}
+              </div>
+              <div style={{ width: '100%', overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '2px solid var(--color-linen)', color: 'var(--color-slate)', textAlign: 'left', background: 'var(--color-fog-gray)' }}>
+                      <th style={{ padding: '10px 12px' }}># NO</th>
+                      <th style={{ padding: '10px 12px' }}>ASSEMBLY NAME</th>
+                      <th style={{ padding: '10px 12px' }}>DISTRICT</th>
+                      <th style={{ padding: '10px 12px' }}>USERNAME</th>
+                      <th style={{ padding: '10px 12px' }}>PASSCODE</th>
+                      <th style={{ padding: '10px 12px', textAlign: 'right' }}>QUICK LOGIN</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredAssemblyCreds.slice((assCredPage - 1) * 15, assCredPage * 15).map((ass) => (
+                      <tr key={ass.username} style={{ borderBottom: '1px solid var(--color-linen)' }}>
+                        <td style={{ padding: '12px', fontWeight: '700', color: 'var(--color-slate)' }}>#{ass.assemblyNo}</td>
+                        <td style={{ padding: '12px', fontWeight: '700', color: 'var(--color-midnight-ink)' }}>{ass.assemblyName}</td>
+                        <td style={{ padding: '12px', color: 'var(--color-slate)' }}>{ass.district}</td>
+                        <td style={{ padding: '12px', fontFamily: 'monospace', fontWeight: '600', color: 'var(--color-slate)' }}>{ass.username}</td>
+                        <td style={{ padding: '12px', fontFamily: 'monospace', fontWeight: '700', color: 'var(--color-saffron)' }}>{ass.passcode}</td>
+                        <td style={{ padding: '12px', textAlign: 'right' }}>
+                          <button onClick={() => handleQuickSwitch(ass.username, ass.passcode)} className="btn btn-ghost" style={{ padding: '5px 12px', fontSize: '12px', fontWeight: '700' }}>
+                            <LogIn size={13} /> Switch Login
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {renderPagination(assCredPage, filteredAssemblyCreds.length, 15, setAssCredPage)}
+            </div>
+          )}
+
+          {/* Sub-Tab 3: Booth Credentials */}
+          {credSubTab === 'booths' && (
+            <div className="campsite-card" style={{ width: '100%', padding: '24px', boxSizing: 'border-box' }}>
+              <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'center', marginBottom: '20px' }}>
+                <div style={{ flex: 1, minWidth: '220px' }}>
+                  <label style={{ fontSize: '12px', fontWeight: '700', color: 'var(--color-slate)', display: 'block', marginBottom: '6px' }}>Select Assembly Constituency:</label>
+                  <select
+                    value={selectedAssemblyNo}
+                    onChange={(e) => { setSelectedAssemblyNo(e.target.value); setBoothCredPage(1); }}
+                    className="form-control"
+                  >
+                    {assembliesList.map(a => (
+                      <option key={a.assemblyNo} value={a.assemblyNo}>
+                        #{a.assemblyNo} — {a.assemblyName} ({a.district})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div style={{ flex: 1, minWidth: '220px' }}>
+                  <label style={{ fontSize: '12px', fontWeight: '700', color: 'var(--color-slate)', display: 'block', marginBottom: '6px' }}>Search Booth No or Passcode:</label>
+                  <input
+                    type="text"
+                    placeholder="Search booth number..."
+                    value={boothSearchQuery}
+                    onChange={(e) => { setBoothSearchQuery(e.target.value); setBoothCredPage(1); }}
+                    className="form-control"
+                  />
+                </div>
+              </div>
+
+              {loadingBooths ? (
+                <div style={{ padding: '40px', textAlign: 'center', color: 'var(--color-slate)' }}>Loading booth logins...</div>
+              ) : boothCredentialsData && (
+                <div style={{ width: '100%', overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                    <thead>
+                      <tr style={{ borderBottom: '2px solid var(--color-linen)', color: 'var(--color-slate)', textAlign: 'left', background: 'var(--color-fog-gray)' }}>
+                        <th style={{ padding: '10px 12px' }}>BOOTH NO</th>
+                        <th style={{ padding: '10px 12px' }}>ASSEMBLY</th>
+                        <th style={{ padding: '10px 12px' }}>DISTRICT</th>
+                        <th style={{ padding: '10px 12px' }}>USERNAME</th>
+                        <th style={{ padding: '10px 12px' }}>PASSCODE</th>
+                        <th style={{ padding: '10px 12px', textAlign: 'right' }}>QUICK LOGIN</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredBooths.slice((boothCredPage - 1) * 15, boothCredPage * 15).map((b) => (
+                        <tr key={b.username} style={{ borderBottom: '1px solid var(--color-linen)' }}>
+                          <td style={{ padding: '10px 12px', fontWeight: '700', color: 'var(--color-midnight-ink)' }}>Booth {b.boothNo}</td>
+                          <td style={{ padding: '10px 12px' }}>{boothCredentialsData.assemblyName}</td>
+                          <td style={{ padding: '10px 12px', color: 'var(--color-slate)' }}>{boothCredentialsData.district}</td>
+                          <td style={{ padding: '10px 12px', fontFamily: 'monospace', fontWeight: '600' }}>{b.username}</td>
+                          <td style={{ padding: '10px 12px', fontFamily: 'monospace', fontWeight: '700', color: 'var(--color-saffron)' }}>{b.passcode}</td>
+                          <td style={{ padding: '10px 12px', textAlign: 'right' }}>
+                            <button onClick={() => handleQuickSwitch(b.username, b.passcode)} className="btn btn-ghost" style={{ padding: '5px 12px', fontSize: '12px', fontWeight: '700' }}>
+                              <LogIn size={13} /> Switch Login
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {renderPagination(boothCredPage, filteredBooths.length, 15, setBoothCredPage)}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════ */}
+      {/* PAGE 4: DISTRICT STATS                    */}
+      {/* ══════════════════════════════════════════ */}
+      {(subPage === 'districts' || subPage === 'districtStats') && (
+        loadingStats ? (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px 24px', gap: '16px' }}>
+            <div style={{ width: '40px', height: '40px', border: '4px solid var(--color-linen)', borderTopColor: 'var(--color-saffron)', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+            <div style={{ fontSize: '14px', color: 'var(--color-slate)', fontWeight: '500' }}>Loading District Stats...</div>
+          </div>
+        ) : (
+          <div className="campsite-card" style={{ width: '100%', padding: '24px', boxSizing: 'border-box' }}>
+            <h3 style={{ fontSize: '18px', fontWeight: '600', color: 'var(--color-midnight-ink)', marginBottom: '16px' }}>
+              District-wise Application Analytics
+            </h3>
+            <div style={{ width: '100%', overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                <thead>
+                  <tr style={{ borderBottom: '2px solid var(--color-linen)', color: 'var(--color-slate)', textAlign: 'left', background: 'var(--color-fog-gray)' }}>
+                    <th style={{ padding: '10px' }}>District Name</th>
+                    <th style={{ padding: '10px' }}>Total Voters</th>
+                    <th style={{ padding: '10px' }}>Applied Voters</th>
+                    <th style={{ padding: '10px' }}>Total Applications</th>
+                    <th style={{ padding: '10px' }}>Approved</th>
+                    <th style={{ padding: '10px' }}>Pending</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(statsData?.districtStats || []).slice((distStatsPage - 1) * 10, distStatsPage * 10).map((row) => (
+                    <tr key={row._id} style={{ borderBottom: '1px solid var(--color-linen)', cursor: 'pointer' }}
+                      onClick={() => { setDistrictFilter(row._id); setAssemblyFilter(''); setBoothFilter(''); setStatusFilter(''); setSchemeFilter(''); navigateSubPage('applications'); }}
+                      onMouseEnter={e => e.currentTarget.style.background = 'var(--color-fog-gray)'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                    >
+                      <td style={{ padding: '10px', fontWeight: '600', color: 'var(--color-midnight-ink)' }}>{row._id}</td>
+                      <td style={{ padding: '10px', color: 'var(--color-slate)' }}>{row.totalVoters ? row.totalVoters.toLocaleString('en-IN') : '—'}</td>
+                      <td style={{ padding: '10px', color: '#0284c7', fontWeight: '700' }}>{row.appliedVoters ?? '—'}</td>
+                      <td style={{ padding: '10px', fontWeight: '600' }}>{row.totalApps}</td>
+                      <td style={{ padding: '10px', color: 'var(--color-forest-pulse)', fontWeight: '600' }}>{row.approved}</td>
+                      <td style={{ padding: '10px', color: 'var(--color-slate)' }}>{row.pending}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {renderPagination(distStatsPage, statsData?.districtStats?.length || 0, 10, setDistStatsPage)}
+          </div>
+        )
+      )}
+
+      {/* ══════════════════════════════════════════ */}
+      {/* PAGE 5: ASSEMBLY STATS                    */}
+      {/* ══════════════════════════════════════════ */}
+      {(subPage === 'assemblies' || subPage === 'assemblyStats') && (
+        loadingStats ? (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px 24px', gap: '16px' }}>
+            <div style={{ width: '40px', height: '40px', border: '4px solid var(--color-linen)', borderTopColor: 'var(--color-saffron)', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+            <div style={{ fontSize: '14px', color: 'var(--color-slate)', fontWeight: '500' }}>Loading Assembly Stats...</div>
+          </div>
+        ) : (
+          <div className="campsite-card" style={{ width: '100%', padding: '24px', boxSizing: 'border-box' }}>
+            <h3 style={{ fontSize: '18px', fontWeight: '600', color: 'var(--color-midnight-ink)', marginBottom: '16px' }}>
+              Assembly Constituency-wise Stats
+            </h3>
+            <div style={{ width: '100%', overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                <thead>
+                  <tr style={{ borderBottom: '2px solid var(--color-linen)', color: 'var(--color-slate)', textAlign: 'left', background: 'var(--color-fog-gray)' }}>
+                    <th style={{ padding: '10px' }}>Assembly Constituency</th>
+                    <th style={{ padding: '10px' }}>District</th>
+                    <th style={{ padding: '10px' }}>Total Voters</th>
+                    <th style={{ padding: '10px' }}>Applied Voters</th>
+                    <th style={{ padding: '10px' }}>Total Applications</th>
+                    <th style={{ padding: '10px' }}>Approved</th>
+                    <th style={{ padding: '10px' }}>Pending</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(statsData?.assemblyStats || []).slice((assStatsPage - 1) * 15, assStatsPage * 15).map((row, idx) => (
+                    <tr key={idx} style={{ borderBottom: '1px solid var(--color-linen)', cursor: 'pointer' }}
+                      onClick={() => { setDistrictFilter(row._id.district); setAssemblyFilter(row._id.assemblyName); setBoothFilter(''); setStatusFilter(''); setSchemeFilter(''); navigateSubPage('applications'); }}
+                      onMouseEnter={e => e.currentTarget.style.background = 'var(--color-fog-gray)'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                    >
+                      <td style={{ padding: '10px', fontWeight: '600', color: 'var(--color-midnight-ink)' }}>{row._id.assemblyName}</td>
+                      <td style={{ padding: '10px', color: 'var(--color-slate)' }}>{row._id.district}</td>
+                      <td style={{ padding: '10px', color: 'var(--color-slate)' }}>{row.totalVoters ? row.totalVoters.toLocaleString('en-IN') : '—'}</td>
+                      <td style={{ padding: '10px', color: '#0284c7', fontWeight: '700' }}>{row.appliedVoters ?? '—'}</td>
+                      <td style={{ padding: '10px', fontWeight: '600' }}>{row.totalApps}</td>
+                      <td style={{ padding: '10px', color: 'var(--color-forest-pulse)', fontWeight: '600' }}>{row.approved}</td>
+                      <td style={{ padding: '10px', color: 'var(--color-slate)' }}>{row.pending}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {renderPagination(assStatsPage, statsData?.assemblyStats?.length || 0, 15, setAssStatsPage)}
+          </div>
+        )
+      )}
+
+      {/* ══════════════════════════════════════════ */}
+      {/* PAGE 6: BOOTH STATS                       */}
+      {/* ══════════════════════════════════════════ */}
+      {(subPage === 'booths' || subPage === 'boothStats') && (
+        loadingStats ? (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px 24px', gap: '16px' }}>
+            <div style={{ width: '40px', height: '40px', border: '4px solid var(--color-linen)', borderTopColor: 'var(--color-saffron)', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+            <div style={{ fontSize: '14px', color: 'var(--color-slate)', fontWeight: '500' }}>Loading Booth Stats...</div>
+          </div>
+        ) : (
+
+        <div className="campsite-card" style={{ width: '100%', padding: '24px', boxSizing: 'border-box' }}>
+          <h3 style={{ fontSize: '18px', fontWeight: '600', color: 'var(--color-midnight-ink)', marginBottom: '16px' }}>
+            Polling Booth-wise Breakdown Stats
+          </h3>
+          <div style={{ width: '100%', overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+              <thead>
+                <tr style={{ borderBottom: '2px solid var(--color-linen)', color: 'var(--color-slate)', textAlign: 'left', background: 'var(--color-fog-gray)' }}>
+                  <th style={{ padding: '10px' }}>Booth / Part No</th>
+                  <th style={{ padding: '10px' }}>Assembly</th>
+                  <th style={{ padding: '10px' }}>District</th>
+                  <th style={{ padding: '10px' }}>Total Voters</th>
+                  <th style={{ padding: '10px' }}>Applied Voters</th>
+                  <th style={{ padding: '10px' }}>Total Applications</th>
+                  <th style={{ padding: '10px' }}>Approved</th>
+                  <th style={{ padding: '10px' }}>Pending</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(statsData.boothStats || []).slice((boothStatsPage - 1) * 15, boothStatsPage * 15).map((row, idx) => (
+                  <tr key={idx} style={{ borderBottom: '1px solid var(--color-linen)', cursor: 'pointer' }}
+                    onClick={() => { setDistrictFilter(row._id.district); setAssemblyFilter(row._id.assemblyName); setBoothFilter(String(row._id.boothNo)); setStatusFilter(''); setSchemeFilter(''); navigateSubPage('applications'); }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'var(--color-fog-gray)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                  >
+                    <td style={{ padding: '10px', fontWeight: '600', color: 'var(--color-midnight-ink)' }}>Booth {row._id.boothNo}</td>
+                    <td style={{ padding: '10px' }}>{row._id.assemblyName}</td>
+                    <td style={{ padding: '10px', color: 'var(--color-slate)' }}>{row._id.district}</td>
+                    <td style={{ padding: '10px', color: 'var(--color-slate)' }}>{row.totalVoters ? row.totalVoters.toLocaleString('en-IN') : '—'}</td>
+                    <td style={{ padding: '10px', color: '#0284c7', fontWeight: '700' }}>{row.appliedVoters ?? '—'}</td>
+                    <td style={{ padding: '10px', fontWeight: '600' }}>{row.totalApps}</td>
+                    <td style={{ padding: '10px', color: 'var(--color-forest-pulse)', fontWeight: '600' }}>{row.approved}</td>
+                    <td style={{ padding: '10px', color: 'var(--color-slate)' }}>{row.pending}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {renderPagination(boothStatsPage, statsData?.boothStats?.length || 0, 15, setBoothStatsPage)}
+        </div>
+        )
+      )}
+
+      {/* PAGE: BOOTH PRESIDENT REQUESTS */}
+      {subPage === 'booth_presidents' && (
+        <BoothPresidentRequestsView admin={admin} />
+      )}
+
+      {/* ══════════════════════════════════════════ */}
+      {/* PAGE 7: REPORTS & EXCEL EXPORT             */}
+      {/* ══════════════════════════════════════════ */}
+      {subPage === 'reports' && (
+        <ReportsView
+          initialDistrict={districtFilter}
+          initialAssembly={assemblyFilter}
+          initialBooth={boothFilter}
+          initialStatus={statusFilter}
+          initialScheme={schemeFilter}
+        />
+      )}
+
+      {subPage === 'schemes' && (
+        <SchemesManagementView />
+      )}
+
+      {subPage === 'flow_images' && (
+        <FlowImagesView />
+      )}
+        </main>
+      </div>
+    </div>
+
+  );
+};
+
+export default SuperAdminDashboard;

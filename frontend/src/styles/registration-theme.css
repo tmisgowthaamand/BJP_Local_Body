@@ -1,0 +1,410 @@
+/* BJP Candidate Registration Theme — 70% Saffron, 30% BJP Green */
+
+:root {
+  /* Theme proportions */
+  --saffron-ratio:  70%;
+  --green-ratio:    30%;
+
+  /* Saffron — 70% of all visible UI */
+  --saffron-deep:   #FF6600;   /* Primary CTA buttons, active badges, active borders */
+  --saffron-mid:    #FF8C00;   /* Gradient highlights, active step indicators */
+  --saffron-light:  #FFF3E0;   /* Card active backgrounds & input focus rings */
+  --saffron-pale:   #FFF8F0;   /* Page background wash */
+  --saffron-bright: #FF9933;   /* Icons, badges, primary brand accents */
+
+  /* BJP Green — 30% of UI */
+  --green-deep:     #1B5E20;   /* Form headers, section titles */
+  --green-mid:      #2E7D32;   /* Verification badges, success indicators */
+  --green-light:    #E8F5E9;   /* Verified state background wash */
+  --green-accent:   #4CAF50;   /* Checkmarks, confirmed icons */
+
+  /* Neutrals */
+  --text-primary:   #1A1A1A;
+  --text-muted:     #777777;
+  --border-light:   #E0E0E0;
+  --border-saffron: #FF6600;
+  --white:          #FFFFFF;
+
+  /* Fonts */
+  --font-family:    'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.reg-page-container {
+  min-height: 100vh;
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+  background-color: var(--saffron-pale);
+  font-family: var(--font-family);
+  color: var(--text-primary);
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+.reg-content-wrapper {
+  flex: 1;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px 16px;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+@media (max-width: 768px) {
+  .reg-content-wrapper {
+    padding: 12px 10px;
+  }
+}
+
+/* Card Styling */
+.reg-card {
+  background: var(--white);
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  padding: 24px;
+  margin-bottom: 24px;
+  border: 1px solid rgba(255, 102, 0, 0.12);
+  transition: all 0.2s ease;
+}
+
+.reg-card-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.reg-card-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.reg-card-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.reg-card-subtitle {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* Step 6 Local Body Cards */
+.lb-card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 640px) {
+  .lb-card-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.lb-card {
+  height: 130px;
+  border-radius: 12px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  overflow: hidden;
+  transition: all 0.2s ease;
+  background: var(--white);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.lb-card__top {
+  height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+}
+
+.lb-card--rural .lb-card__top {
+  background: linear-gradient(135deg, #E8F5E9, #C8E6C9);
+}
+
+.lb-card--urban .lb-card__top {
+  background: linear-gradient(135deg, #FFF3E0, #FFE0B2);
+}
+
+.lb-card__bottom {
+  height: 60px;
+  padding: 6px 8px;
+  background: var(--white);
+  text-align: center;
+}
+
+.lb-card__label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.lb-card__tamil {
+  font-size: 11px;
+  color: #666;
+  margin-top: 2px;
+}
+
+.lb-card.selected {
+  border-color: var(--saffron-deep);
+  box-shadow: 0 0 0 3px rgba(255, 102, 0, 0.25);
+}
+
+.lb-card.selected .lb-card__bottom {
+  background: var(--saffron-light);
+}
+
+.lb-card.selected .lb-card__label {
+  color: var(--saffron-deep);
+}
+
+.lb-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+/* Chatbot FAB & Window */
+.chatbot-fab {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--saffron-deep), var(--saffron-mid));
+  color: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(255, 102, 0, 0.4);
+  cursor: pointer;
+  z-index: 1000;
+  border: none;
+  transition: transform 0.2s ease;
+}
+
+.chatbot-fab:hover {
+  transform: scale(1.08);
+}
+
+.chatbot-window {
+  position: fixed;
+  bottom: 90px;
+  right: 24px;
+  width: 360px;
+  height: 520px;
+  max-width: calc(100vw - 32px);
+  background: var(--white);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 1000;
+  border: 1px solid var(--border-light);
+}
+
+/* ════════════════════════════════════════════════════════════ */
+/* ULTRA-RESPONSIVE ADAPTIVE MEDIA QUERIES FOR ALL DEVICES   */
+/* (Fold, iPhone 14/15/16/17, Android, iPad, Tablets, Laptops) */
+/* ════════════════════════════════════════════════════════════ */
+
+/* Base touch & font fixes to eliminate iOS auto-zoom */
+input[type="text"],
+input[type="tel"],
+input[type="number"],
+input[type="email"],
+select,
+textarea {
+  font-size: 16px !important;
+  box-sizing: border-box;
+}
+
+/* Ensure step containers scale down smoothly on small devices */
+.reg-card, [style*="borderRadius: '16px'"], [style*="borderRadius: 16px"] {
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* Tablet & iPad screens (768px - 1024px) */
+@media (max-width: 1024px) {
+  .reg-content-wrapper {
+    max-width: 720px;
+    padding: 20px 16px;
+  }
+  
+  .chatbot-window {
+    width: 380px;
+    height: 540px;
+    right: 20px;
+    bottom: 84px;
+  }
+}
+
+/* Mobile & Android/iPhone screens (max-width: 768px) */
+@media (max-width: 768px) {
+  .reg-content-wrapper {
+    max-width: 100%;
+    padding: 14px 12px;
+  }
+
+  /* Override inline 36px/32px paddings on step container cards */
+  div[style*="padding: '36px 32px'"],
+  div[style*="padding: 36px 32px"],
+  div[style*="padding: '32px 28px'"],
+  div[style*="padding: 32px 28px"] {
+    padding: 20px 16px !important;
+    border-radius: 14px !important;
+  }
+
+  /* Override hero headers */
+  div[style*="padding: '20px'"],
+  div[style*="padding: 20px"] {
+    padding: 14px !important;
+  }
+
+  .lb-card-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .lb-card {
+    height: 110px;
+  }
+
+  .lb-card__top {
+    height: 56px;
+    font-size: 26px;
+  }
+
+  .lb-card__bottom {
+    height: 54px;
+    padding: 4px 6px;
+  }
+  
+  .chatbot-window {
+    width: calc(100vw - 24px);
+    height: calc(100vh - 120px);
+    max-height: 520px;
+    right: 12px;
+    bottom: 80px;
+  }
+  
+  .chatbot-fab {
+    bottom: 16px;
+    right: 16px;
+    width: 50px;
+    height: 50px;
+  }
+}
+
+/* Small Mobiles & iPhones (max-width: 480px) */
+@media (max-width: 480px) {
+  .reg-content-wrapper {
+    padding: 10px 8px;
+  }
+
+  div[style*="padding: '36px 32px'"],
+  div[style*="padding: 36px 32px"],
+  div[style*="padding: '32px 28px'"],
+  div[style*="padding: 32px 28px"],
+  div[style*="padding: '28px'"],
+  div[style*="padding: 28px"] {
+    padding: 16px 12px !important;
+    border-radius: 12px !important;
+  }
+
+  h1, h2 {
+    font-size: 17px !important;
+  }
+
+  p {
+    font-size: 12px !important;
+  }
+
+  /* Ensure inputs height is comfortable for touch */
+  input[type="text"], input[type="tel"], select, textarea {
+    height: 48px !important;
+    padding: 0 12px !important;
+  }
+
+  /* Step nav buttons flex column on tiny screens */
+  div[style*="display: 'flex'"][style*="justifyContent: 'space-between'"] {
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+  }
+}
+
+/* Galaxy Fold / Tiny Screens (max-width: 360px) */
+@media (max-width: 360px) {
+  .reg-content-wrapper {
+    padding: 8px 4px;
+  }
+
+  .lb-card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .lb-card {
+    height: 90px;
+    display: flex;
+    align-items: center;
+  }
+
+  .lb-card__top {
+    width: 70px;
+    height: 100%;
+  }
+
+  .lb-card__bottom {
+    flex: 1;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: left;
+    padding-left: 12px;
+  }
+}
+
+/* Universal Form Input & Container Overflow Protection */
+input, select, textarea, button, form {
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+div[style*="padding: '32px'"],
+div[style*="padding: 32px"],
+div[style*="padding: '36px 32px'"],
+div[style*="padding: 36px 32px"] {
+  box-sizing: border-box !important;
+  max-width: 100% !important;
+}
+
+/* OTP 6-box input grid scaling for mobile */
+@media (max-width: 480px) {
+  div[onpaste] input,
+  input[inputmode="numeric"] {
+    width: 38px !important;
+    min-width: 30px !important;
+    height: 46px !important;
+    font-size: 18px !important;
+    padding: 0 !important;
+  }
+}
