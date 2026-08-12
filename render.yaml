@@ -35,3 +35,7 @@ services:
         sync: false
       - key: FRONTEND_URL
         value: https://bjp-local-body.vercel.app
+      - key: FAST2SMS_API_KEY
+        sync: false
+      - key: SMS_API_KEY
+        sync: false
