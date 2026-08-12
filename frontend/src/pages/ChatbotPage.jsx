@@ -197,7 +197,7 @@ const getActiveStep = (chatState) => {
   }
 }
 
-const FINAL_BANNER_URL = 'https://res.cloudinary.com/dkjrdntf/image/upload/f_auto,q_auto,w_600/v1785563946/bjp_schemes/bjp_final_banner.png';
+const FINAL_BANNER_URL = 'https://res.cloudinary.com/dkjrdntf/image/upload/f_webp,q_auto:good,w_480/v1785563946/bjp_schemes/bjp_final_banner.png';
 
 // Instant memory preload for zero-delay rendering
 if (typeof window !== 'undefined') {
