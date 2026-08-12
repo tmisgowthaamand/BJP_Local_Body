@@ -2,13 +2,11 @@
 
 > Official candidate application portal for BJP local body elections in Tamil Nadu.
 
-## System Overview
-This web application enables BJP party candidates across Tamil Nadu to apply for Local Body elections across 12 structured steps.
+## Information and Portals
+- [Candidate Application](https://bjp-local-body.vercel.app/candidate-registration): 12-Step candidate registration portal
+- [Admin Portal](https://bjp-local-body.vercel.app/admin): Leadership application review portal
 
-## Key Features & Endpoints
-- Candidate Registration: /candidate-registration
-- Admin Portal: /admin
-- Verification: Mobile OTP & EPIC Voter ID Verification
-
-## Technical Stack
-- React 18, Vite, Node.js, Express, MongoDB Atlas, Cloudinary
+## Core Features
+- Mobile OTP Verification
+- EPIC Voter ID Lookup
+- Candidate Ward and Position Selection
