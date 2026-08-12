@@ -181,26 +181,7 @@
 
 /* Chatbot FAB & Window */
 .chatbot-fab {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--saffron-deep), var(--saffron-mid));
-  color: var(--white);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 16px rgba(255, 102, 0, 0.4);
-  cursor: pointer;
-  z-index: 1000;
-  border: none;
-  transition: transform 0.2s ease;
-}
-
-.chatbot-fab:hover {
-  transform: scale(1.08);
+  display: none !important;
 }
 
 .chatbot-window {
@@ -245,8 +226,8 @@ textarea {
 /* Tablet & iPad screens (768px - 1024px) */
 @media (max-width: 1024px) {
   .reg-content-wrapper {
-    max-width: 720px;
-    padding: 20px 16px;
+    max-width: 640px;
+    padding: 18px 14px 44px 14px;
   }
   
   .chatbot-window {
@@ -261,22 +242,22 @@ textarea {
 @media (max-width: 768px) {
   .reg-content-wrapper {
     max-width: 100%;
-    padding: 14px 12px;
+    padding: 12px 10px 48px 10px;
   }
 
-  /* Override inline 36px/32px paddings on step container cards */
+  /* Override inline paddings on step container cards */
   div[style*="padding: '36px 32px'"],
   div[style*="padding: 36px 32px"],
   div[style*="padding: '32px 28px'"],
   div[style*="padding: 32px 28px"] {
-    padding: 20px 16px !important;
+    padding: 18px 12px !important;
     border-radius: 14px !important;
   }
 
   /* Override hero headers */
   div[style*="padding: '20px'"],
   div[style*="padding: 20px"] {
-    padding: 14px !important;
+    padding: 14px 12px !important;
   }
 
   .lb-card-grid {
@@ -303,21 +284,23 @@ textarea {
     height: calc(100vh - 120px);
     max-height: 520px;
     right: 12px;
-    bottom: 80px;
+    bottom: 70px;
   }
   
   .chatbot-fab {
-    bottom: 16px;
-    right: 16px;
-    width: 50px;
-    height: 50px;
+    bottom: 12px;
+    right: 12px;
+    width: 44px;
+    height: 44px;
+    font-size: 20px;
+    box-shadow: 0 4px 12px rgba(255, 102, 0, 0.3);
   }
 }
 
 /* Small Mobiles & iPhones (max-width: 480px) */
 @media (max-width: 480px) {
   .reg-content-wrapper {
-    padding: 10px 8px;
+    padding: 10px 8px 52px 8px;
   }
 
   div[style*="padding: '36px 32px'"],
@@ -326,12 +309,12 @@ textarea {
   div[style*="padding: 32px 28px"],
   div[style*="padding: '28px'"],
   div[style*="padding: 28px"] {
-    padding: 16px 12px !important;
+    padding: 14px 10px !important;
     border-radius: 12px !important;
   }
 
   h1, h2 {
-    font-size: 17px !important;
+    font-size: 16.5px !important;
   }
 
   p {
@@ -340,21 +323,15 @@ textarea {
 
   /* Ensure inputs height is comfortable for touch */
   input[type="text"], input[type="tel"], select, textarea {
-    height: 48px !important;
-    padding: 0 12px !important;
-  }
-
-  /* Step nav buttons flex column on tiny screens */
-  div[style*="display: 'flex'"][style*="justifyContent: 'space-between'"] {
-    flex-wrap: wrap !important;
-    gap: 10px !important;
+    height: 46px !important;
+    padding: 0 10px !important;
   }
 }
 
 /* Galaxy Fold / Tiny Screens (max-width: 360px) */
 @media (max-width: 360px) {
   .reg-content-wrapper {
-    padding: 8px 4px;
+    padding: 6px 4px 52px 4px;
   }
 
   .lb-card-grid {
@@ -383,28 +360,124 @@ textarea {
   }
 }
 
-/* Universal Form Input & Container Overflow Protection */
-input, select, textarea, button, form {
-  max-width: 100% !important;
+/* Premium Error Box */
+.reg-error-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background-color: #FFF5F5;
+  color: #991B1B;
+  border-radius: 12px;
+  font-size: 13.5px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  border: 1px solid #FCA5A5;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.08);
   box-sizing: border-box !important;
+  width: 100%;
+  overflow: hidden;
 }
 
-div[style*="padding: '32px'"],
-div[style*="padding: 32px"],
-div[style*="padding: '36px 32px'"],
-div[style*="padding: 36px 32px"] {
-  box-sizing: border-box !important;
-  max-width: 100% !important;
+.reg-error-box .error-icon {
+  font-size: 16px;
+  flex-shrink: 0;
 }
 
-/* OTP 6-box input grid scaling for mobile */
-@media (max-width: 480px) {
-  div[onpaste] input,
-  input[inputmode="numeric"] {
-    width: 38px !important;
-    min-width: 30px !important;
-    height: 46px !important;
-    font-size: 18px !important;
-    padding: 0 !important;
+.reg-error-box .error-text {
+  flex: 1;
+  min-width: 0;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  line-height: 1.35;
+}
+
+/* Universal Step Container Card */
+.step-card-container {
+  background-color: #FFFFFF;
+  border-radius: 16px;
+  padding: 24px 20px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+  border-left: 1px solid #FFE0B2;
+  border-right: 1px solid #FFE0B2;
+  border-bottom: 1px solid #FFE0B2;
+  border-top: 4px solid #FF6600;
+  width: 100%;
+  box-sizing: border-box !important;
+  overflow: hidden;
+}
+
+@media (max-width: 600px) {
+  .step-card-container {
+    padding: 16px 12px !important;
+    border-radius: 14px !important;
   }
+}
+
+/* Verified Voter Inner Card Wrapper */
+.voter-card-wrapper {
+  background-color: #FFFFFF;
+  border-radius: 14px;
+  padding: 16px 14px;
+  margin-bottom: 20px;
+  border: 1px solid #FFE0B2;
+  box-shadow: 0 4px 16px rgba(255, 102, 0, 0.06);
+  width: 100%;
+  box-sizing: border-box !important;
+  overflow: hidden;
+}
+
+@media (max-width: 480px) {
+  .voter-card-wrapper {
+    padding: 12px 10px !important;
+  }
+}
+
+/* Voter Info Card Grid */
+/* Voter Info Card Grid — 2-Column Aligned Dashboard Layout */
+.voter-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr) !important;
+  gap: 10px;
+  width: 100%;
+  box-sizing: border-box !important;
+}
+
+.voter-info-grid > *:last-child:nth-child(odd) {
+  grid-column: span 2;
+}
+
+@media (max-width: 480px) {
+  .voter-info-grid {
+    gap: 8px !important;
+  }
+}
+
+/* Voter Info Single Card Box */
+.voter-info-card {
+  background-color: #FFFFFF;
+  border-radius: 12px;
+  padding: 10px 12px;
+  box-shadow: 0 2px 6px rgba(255, 102, 0, 0.04);
+  border: 1px solid #FFE0B2;
+  box-sizing: border-box !important;
+  min-width: 0;
+  overflow: hidden;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.voter-info-card:hover {
+  border-color: #FFB74D;
+  box-shadow: 0 4px 12px rgba(255, 102, 0, 0.08);
+}
+
+.voter-info-card .card-value {
+  font-family: 'Plus Jakarta Sans', 'Inter', sans-serif !important;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #0F172A !important;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  line-height: 1.3;
+  margin-top: 2px;
 }

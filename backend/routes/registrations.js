@@ -137,7 +137,7 @@ router.post('/send-otp', async (req, res) => {
 const buildAppObject = (existing, cleanMobile) => {
   if (!existing) return null;
   return {
-    applicationId: existing.application_id || `bjp2026-${cleanMobile.slice(-6)}`,
+    applicationId: (existing.application_id || `BJP2026-${cleanMobile.slice(-6)}`).toUpperCase(),
     full_name: existing.full_name || 'Candidate',
     mobile: existing.mobile || cleanMobile,
     district: (existing.district || 'Thiruvallur').replace(/Tiruvallur/gi, 'Thiruvallur'),
@@ -305,9 +305,9 @@ router.post('/submit', async (req, res) => {
       });
     }
 
-    // Generate unique Application ID format: bjp2026-XXXXXX
+    // Generate unique Application ID format: BJP2026-XXXXXX
     const randomSuffix = Math.floor(100000 + Math.random() * 900000).toString();
-    const applicationId = `bjp2026-${randomSuffix}`;
+    const applicationId = `BJP2026-${randomSuffix}`;
 
     const enquiryDoc = await Enquiry.create({
       mobile: data.mobile,

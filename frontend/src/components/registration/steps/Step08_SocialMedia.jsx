@@ -20,14 +20,7 @@ const Step08_SocialMedia = () => {
   };
 
   return (
-    <div style={{
-      backgroundColor: '#FFFFFF',
-      borderRadius: '16px',
-      padding: '36px 32px',
-      boxShadow: '0 10px 30px rgba(0, 0, 0, 0.05)',
-      border: '1px solid #E0E0E0',
-      borderTop: '4px solid #FF6600'
-    }}>
+    <div className="step-card-container">
 
       {/* Step Header */}
       <div style={{ marginBottom: '24px' }}>
@@ -93,7 +86,7 @@ const Step08_SocialMedia = () => {
             type="text"
             value={facebook}
             onChange={(e) => setFacebook(e.target.value)}
-            placeholder="https://www.facebook.com/gowthaaman.krishna/"
+            placeholder="https://facebook.com/yourprofile"
             style={{
               width: '100%',
               height: '50px',

@@ -60,7 +60,8 @@ const MemberProfileTimelineView = ({ voterData, onBack, onUpdateAppStatus }) => 
     party = 'BJP'
   } = voterData;
 
-  const resolvedAppId = applicationId || voterData.application_id || `BJP2026-${(mobile || '').slice(-6)}`;
+  const rawAppId = applicationId || voterData.application_id || `BJP2026-${(mobile || '').slice(-6)}`;
+  const resolvedAppId = (rawAppId || '').toUpperCase();
   const mainApp = applications[0] || { _id, status: voterData.status || 'Submitted', appliedAt: voterData.createdAt || Date.now() };
 
   const [currentStatus, setCurrentStatus] = useState(mainApp.status || 'Submitted');
@@ -277,14 +278,14 @@ const MemberProfileTimelineView = ({ voterData, onBack, onUpdateAppStatus }) => 
                   <Share2 size={14} color="#FF6600" /> Step 8: 8 Social Media &amp; Online Handles
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 12px', fontSize: '12px' }}>
-                  <div>🌐 Facebook: <strong style={{ color: '#2563eb' }}>{facebookUrl || `@${voterName.toLowerCase().replace(/[^a-z0-9]/g, '')}`}</strong></div>
-                  <div>📸 Instagram: <strong style={{ color: '#e1306c' }}>{instagramUrl || `@${voterName.toLowerCase().replace(/[^a-z0-9]/g, '')}_bjp`}</strong></div>
-                  <div>🐦 Twitter / X: <strong style={{ color: '#0f172a' }}>{twitterUrl || `@${voterName.toLowerCase().replace(/[^a-z0-9]/g, '')}_tn`}</strong></div>
-                  <div>🎥 YouTube: <strong style={{ color: '#ff0000' }}>{youtubeUrl || `@${voterName.toLowerCase().replace(/[^a-z0-9]/g, '')}_official`}</strong></div>
-                  <div>💼 LinkedIn: <strong style={{ color: '#0a66c2' }}>{linkedinUrl || `${voterName.toLowerCase().replace(/[^a-z0-9]/g, '')}`}</strong></div>
-                  <div>💬 WhatsApp: <strong style={{ color: '#25d366' }}>{whatsappNo || mobile}</strong></div>
-                  <div>✈️ Telegram: <strong style={{ color: '#0088cc' }}>{telegramUrl || `@${voterName.toLowerCase().replace(/[^a-z0-9]/g, '')}`}</strong></div>
-                  <div>🌐 Website: <strong style={{ color: '#FF6600' }}>{websiteUrl || `${voterName.toLowerCase().replace(/[^a-z0-9]/g, '')}.bjp.in`}</strong></div>
+                  <div>🌐 Facebook: <strong style={{ color: facebookUrl ? '#2563eb' : '#94a3b8' }}>{facebookUrl || 'Not Provided'}</strong></div>
+                  <div>📸 Instagram: <strong style={{ color: instagramUrl ? '#e1306c' : '#94a3b8' }}>{instagramUrl || 'Not Provided'}</strong></div>
+                  <div>🐦 Twitter / X: <strong style={{ color: twitterUrl ? '#0f172a' : '#94a3b8' }}>{twitterUrl || 'Not Provided'}</strong></div>
+                  <div>🎥 YouTube: <strong style={{ color: youtubeUrl ? '#ff0000' : '#94a3b8' }}>{youtubeUrl || 'Not Provided'}</strong></div>
+                  <div>💼 LinkedIn: <strong style={{ color: linkedinUrl ? '#0a66c2' : '#94a3b8' }}>{linkedinUrl || 'Not Provided'}</strong></div>
+                  <div>💬 WhatsApp: <strong style={{ color: (whatsappNo || mobile) ? '#25d366' : '#94a3b8' }}>{whatsappNo || mobile || 'Not Provided'}</strong></div>
+                  <div>✈️ Telegram: <strong style={{ color: telegramUrl ? '#0088cc' : '#94a3b8' }}>{telegramUrl || 'Not Provided'}</strong></div>
+                  <div>🌐 Website: <strong style={{ color: websiteUrl ? '#FF6600' : '#94a3b8' }}>{websiteUrl || 'Not Provided'}</strong></div>
                 </div>
               </div>
 

@@ -4,23 +4,24 @@ import StepNav from '../StepNav';
 
 const Step07_Position = () => {
   const { state, updateForm } = useApplication();
-  const [positionTitle, setPositionTitle] = useState(state.position_title || state.position || 'Ward Member');
-  const [pref1, setPref1] = useState(state.preference_1 !== undefined ? state.preference_1 : true);
-  const [pref2, setPref2] = useState(state.preference_2 || false);
-  const [pref3, setPref3] = useState(state.preference_3 || false);
+  const [positionTitle, setPositionTitle] = useState(state.position_title || state.position || 'Village Panchayat Ward Member');
+  const [pref2Text, setPref2Text] = useState(typeof state.preference_2_text === 'string' ? state.preference_2_text : (state.preference_2 || ''));
+  const [pref3Text, setPref3Text] = useState(typeof state.preference_3_text === 'string' ? state.preference_3_text : (state.preference_3 || ''));
   const [error, setError] = useState('');
 
   const handleNext = () => {
     if (!positionTitle) {
-      setError('Please select a position to contest');
+      setError('Please select a primary position to contest');
       return false;
     }
     updateForm({
       position_title: positionTitle,
       role: 'confirmed',
-      preference_1: pref1,
-      preference_2: pref2,
-      preference_3: pref3
+      preference_1: positionTitle,
+      preference_2: pref2Text,
+      preference_2_text: pref2Text,
+      preference_3: pref3Text,
+      preference_3_text: pref3Text
     });
     return true;
   };
@@ -44,24 +45,17 @@ const Step07_Position = () => {
       ];
 
   return (
-    <div style={{
-      backgroundColor: '#FFFFFF',
-      borderRadius: '16px',
-      padding: '36px 32px',
-      boxShadow: '0 10px 30px rgba(0, 0, 0, 0.05)',
-      border: '1px solid #E0E0E0',
-      borderTop: '4px solid #FF6600'
-    }}>
+    <div className="step-card-container">
 
       {/* Step Header */}
-      <div style={{ marginBottom: '24px' }}>
+      <div style={{ marginBottom: '20px' }}>
         <div style={{
-          fontSize: '13px',
+          fontSize: '12px',
           fontWeight: 800,
           color: '#FF6600',
           textTransform: 'uppercase',
           letterSpacing: '1px',
-          marginBottom: '6px'
+          marginBottom: '4px'
         }}>
           04 POSITION & PREFERENCES
         </div>
@@ -72,23 +66,23 @@ const Step07_Position = () => {
         display: 'flex',
         alignItems: 'center',
         gap: '16px',
-        marginBottom: '28px',
-        padding: '20px',
+        marginBottom: '24px',
+        padding: '16px',
         backgroundColor: '#FFF8F3',
         borderRadius: '14px',
         border: '1px solid #FFE0B2'
       }}>
         <div
           style={{
-            width: '52px',
-            height: '52px',
+            width: '48px',
+            height: '48px',
             borderRadius: '12px',
             background: 'linear-gradient(135deg, #FF6600 0%, #FF8C00 100%)',
             color: '#FFFFFF',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: '26px',
+            fontSize: '24px',
             flexShrink: 0,
             boxShadow: '0 4px 12px rgba(255, 102, 0, 0.25)'
           }}
@@ -100,15 +94,15 @@ const Step07_Position = () => {
             Position to Contest
           </h2>
           <p style={{ fontSize: '13px', color: '#666666', margin: '3px 0 0 0', fontWeight: 500, lineHeight: 1.4 }}>
-            Specify the post you wish to contest and select your preference priorities.
+            Specify your primary post and enter manual alternative preferences (up to 100 characters each).
           </p>
         </div>
       </div>
 
       {/* Contesting Post Selection */}
-      <div style={{ marginBottom: '28px' }}>
-        <label style={{ display: 'block', fontSize: '14px', fontWeight: 700, color: '#1A1A1A', marginBottom: '8px' }}>
-          Contesting Post
+      <div style={{ marginBottom: '24px' }}>
+        <label style={{ display: 'block', fontSize: '13.5px', fontWeight: 700, color: '#1A1A1A', marginBottom: '8px' }}>
+          Contesting Post (1st Preference)
         </label>
         <select
           value={positionTitle}
@@ -118,17 +112,17 @@ const Step07_Position = () => {
           }}
           style={{
             width: '100%',
-            height: '50px',
-            padding: '0 16px',
+            height: '48px',
+            padding: '0 14px',
             borderRadius: '10px',
-            border: '1.5px solid #D6D6D6',
-            fontSize: '15px',
-            fontWeight: 600,
-            backgroundColor: '#F9F9F9',
-            color: '#1A1A1A',
+            border: '2px solid #FFB74D',
+            fontSize: '14.5px',
+            fontWeight: 700,
+            backgroundColor: '#FFFFFF',
+            color: '#0F172A',
             outline: 'none',
             cursor: 'pointer',
-            boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.02)'
+            boxSizing: 'border-box'
           }}
         >
           {positionOptions.map((opt, idx) => (
@@ -140,119 +134,133 @@ const Step07_Position = () => {
       </div>
 
       {/* Preference Hierarchy Cards */}
-      <div style={{ marginBottom: '28px' }}>
-        <label style={{ display: 'block', fontSize: '14px', fontWeight: 700, color: '#1A1A1A', marginBottom: '12px' }}>
-          Preference Hierarchy
+      <div style={{ marginBottom: '24px' }}>
+        <label style={{ display: 'block', fontSize: '13.5px', fontWeight: 700, color: '#1A1A1A', marginBottom: '12px' }}>
+          Preference Hierarchy & Manual Entry
         </label>
         
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           
           {/* 1st Preference */}
           <div
-            onClick={() => setPref1(!pref1)}
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '16px 20px',
+              padding: '14px 16px',
               borderRadius: '12px',
-              border: pref1 ? '2px solid #FF6600' : '1.5px solid #E0E0E0',
-              backgroundColor: pref1 ? '#FFF8F3' : '#FFFFFF',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              boxShadow: pref1 ? '0 2px 8px rgba(255, 102, 0, 0.12)' : 'none'
+              border: '2px solid #FF6600',
+              backgroundColor: '#FFF8F3',
+              boxShadow: '0 2px 8px rgba(255, 102, 0, 0.1)'
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <input
-                type="checkbox"
-                checked={pref1}
-                onChange={() => {}}
-                style={{ width: '20px', height: '20px', accentColor: '#FF6600', cursor: 'pointer' }}
-              />
-              <span style={{ fontSize: '14px', fontWeight: 700, color: pref1 ? '#FF6600' : '#1A1A1A' }}>
-                1st Preference (Primary choice)
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+              <span style={{ fontSize: '13px', fontWeight: 800, color: '#FF6600', textTransform: 'uppercase', letterSpacing: '0.3px' }}>
+                1st Preference (Primary Choice)
+              </span>
+              <span style={{ fontSize: '11px', fontWeight: 700, color: '#FF6600', backgroundColor: '#FFE0B2', padding: '3px 10px', borderRadius: '20px' }}>
+                Priority #1
               </span>
             </div>
-            <span style={{ fontSize: '12px', fontWeight: 700, color: pref1 ? '#FF6600' : '#757575', backgroundColor: pref1 ? '#FFE0B2' : '#F5F5F5', padding: '4px 10px', borderRadius: '20px' }}>
-              Priority #1
-            </span>
+            <div style={{ fontSize: '15px', fontWeight: 700, color: '#0F172A' }}>
+              {positionTitle}
+            </div>
           </div>
 
-          {/* 2nd Preference */}
+          {/* 2nd Preference Manual Entry Input */}
           <div
-            onClick={() => setPref2(!pref2)}
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '16px 20px',
+              padding: '14px 16px',
               borderRadius: '12px',
-              border: pref2 ? '2px solid #FF6600' : '1.5px solid #E0E0E0',
-              backgroundColor: pref2 ? '#FFF8F3' : '#FFFFFF',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              boxShadow: pref2 ? '0 2px 8px rgba(255, 102, 0, 0.12)' : 'none'
+              border: '1.5px solid #FFE0B2',
+              backgroundColor: '#FFFFFF',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.03)'
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <input
-                type="checkbox"
-                checked={pref2}
-                onChange={() => {}}
-                style={{ width: '20px', height: '20px', accentColor: '#FF6600', cursor: 'pointer' }}
-              />
-              <span style={{ fontSize: '14px', fontWeight: 700, color: pref2 ? '#FF6600' : '#1A1A1A' }}>
-                2nd Preference (Secondary alternative)
-              </span>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+              <label style={{ fontSize: '13px', fontWeight: 700, color: '#E65100', margin: 0, textTransform: 'uppercase', letterSpacing: '0.3px' }}>
+                2nd Preference (Secondary Alternative)
+              </label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontSize: '11px', fontWeight: 700, color: pref2Text.length >= 100 ? '#D32F2F' : '#888888' }}>
+                  {pref2Text.length}/100
+                </span>
+                <span style={{ fontSize: '11px', fontWeight: 700, color: '#E65100', backgroundColor: '#FFF3E0', padding: '3px 10px', borderRadius: '20px' }}>
+                  Priority #2
+                </span>
+              </div>
             </div>
-            <span style={{ fontSize: '12px', fontWeight: 700, color: pref2 ? '#FF6600' : '#757575', backgroundColor: pref2 ? '#FFE0B2' : '#F5F5F5', padding: '4px 10px', borderRadius: '20px' }}>
-              Priority #2
-            </span>
+            <input
+              type="text"
+              maxLength={100}
+              value={pref2Text}
+              onChange={(e) => setPref2Text(e.target.value)}
+              placeholder="Type 2nd preference manual entry (up to 100 characters)..."
+              style={{
+                width: '100%',
+                height: '46px',
+                padding: '0 12px',
+                borderRadius: '8px',
+                border: '1.5px solid #FFB74D',
+                fontSize: '14px',
+                fontWeight: 600,
+                outline: 'none',
+                backgroundColor: '#FFFFFF',
+                color: '#0F172A',
+                boxSizing: 'border-box'
+              }}
+            />
           </div>
 
-          {/* 3rd Preference */}
+          {/* 3rd Preference Manual Entry Input */}
           <div
-            onClick={() => setPref3(!pref3)}
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '16px 20px',
+              padding: '14px 16px',
               borderRadius: '12px',
-              border: pref3 ? '2px solid #FF6600' : '1.5px solid #E0E0E0',
-              backgroundColor: pref3 ? '#FFF8F3' : '#FFFFFF',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              boxShadow: pref3 ? '0 2px 8px rgba(255, 102, 0, 0.12)' : 'none'
+              border: '1.5px solid #FFE0B2',
+              backgroundColor: '#FFFFFF',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.03)'
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <input
-                type="checkbox"
-                checked={pref3}
-                onChange={() => {}}
-                style={{ width: '20px', height: '20px', accentColor: '#FF6600', cursor: 'pointer' }}
-              />
-              <span style={{ fontSize: '14px', fontWeight: 700, color: pref3 ? '#FF6600' : '#1A1A1A' }}>
-                3rd Preference (Tertiary option)
-              </span>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+              <label style={{ fontSize: '13px', fontWeight: 700, color: '#E65100', margin: 0, textTransform: 'uppercase', letterSpacing: '0.3px' }}>
+                3rd Preference (Tertiary Option)
+              </label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontSize: '11px', fontWeight: 700, color: pref3Text.length >= 100 ? '#D32F2F' : '#888888' }}>
+                  {pref3Text.length}/100
+                </span>
+                <span style={{ fontSize: '11px', fontWeight: 700, color: '#E65100', backgroundColor: '#FFF3E0', padding: '3px 10px', borderRadius: '20px' }}>
+                  Priority #3
+                </span>
+              </div>
             </div>
-            <span style={{ fontSize: '12px', fontWeight: 700, color: pref3 ? '#FF6600' : '#757575', backgroundColor: pref3 ? '#FFE0B2' : '#F5F5F5', padding: '4px 10px', borderRadius: '20px' }}>
-              Priority #3
-            </span>
+            <input
+              type="text"
+              maxLength={100}
+              value={pref3Text}
+              onChange={(e) => setPref3Text(e.target.value)}
+              placeholder="Type 3rd preference manual entry (up to 100 characters)..."
+              style={{
+                width: '100%',
+                height: '46px',
+                padding: '0 12px',
+                borderRadius: '8px',
+                border: '1.5px solid #FFB74D',
+                fontSize: '14px',
+                fontWeight: 600,
+                outline: 'none',
+                backgroundColor: '#FFFFFF',
+                color: '#0F172A',
+                boxSizing: 'border-box'
+              }}
+            />
           </div>
 
         </div>
       </div>
 
       {error && (
-        <div style={{
-          padding: '12px 16px', backgroundColor: '#FFEBEE', color: '#C62828',
-          borderRadius: '10px', fontSize: '13.5px', marginBottom: '20px',
-          borderLeft: '4px solid #D32F2F', fontWeight: 600
-        }}>
-          ⚠️ {error}
+        <div className="reg-error-box">
+          <span className="error-icon">⚠️</span>
+          <span className="error-text">{error}</span>
         </div>
       )}
 

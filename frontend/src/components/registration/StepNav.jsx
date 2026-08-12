@@ -22,8 +22,8 @@ const StepNav = ({ onNext, nextDisabled = false, nextText = 'Next →', showBack
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        gap: '10px',
-        marginTop: '24px',
+        gap: '8px',
+        marginTop: '20px',
         width: '100%',
         boxSizing: 'border-box'
       }}
@@ -34,25 +34,24 @@ const StepNav = ({ onNext, nextDisabled = false, nextText = 'Next →', showBack
           onClick={prevStep}
           style={{
             height: '46px',
-            padding: '0 16px',
+            padding: '0 12px',
             borderRadius: '8px',
             border: '2px solid #FF6600',
             backgroundColor: '#FFFFFF',
             color: '#FF6600',
             fontWeight: 700,
-            fontSize: '14px',
+            fontSize: '13px',
             cursor: 'pointer',
             transition: 'all 0.2s ease',
-            flex: '1',
+            flex: '1 1 0',
             minWidth: 0,
-            boxSizing: 'border-box'
+            boxSizing: 'border-box',
+            whiteSpace: 'nowrap'
           }}
         >
           ← Back
         </button>
-      ) : (
-        <div style={{ flex: '1', minWidth: 0 }} />
-      )}
+      ) : null}
 
       {showNext && (
         <button
@@ -61,19 +60,20 @@ const StepNav = ({ onNext, nextDisabled = false, nextText = 'Next →', showBack
           disabled={nextDisabled}
           style={{
             height: '46px',
-            padding: '0 16px',
+            padding: '0 12px',
             borderRadius: '8px',
             border: 'none',
             backgroundColor: nextDisabled ? '#CCCCCC' : '#FF6600',
             color: '#FFFFFF',
             fontWeight: 700,
-            fontSize: '14px',
+            fontSize: '13px',
             cursor: nextDisabled ? 'not-allowed' : 'pointer',
             transition: 'all 0.2s ease',
-            flex: '1',
+            flex: '1.2 1 0',
             minWidth: 0,
             boxSizing: 'border-box',
-            boxShadow: nextDisabled ? 'none' : '0 4px 12px rgba(255, 102, 0, 0.3)'
+            boxShadow: nextDisabled ? 'none' : '0 4px 12px rgba(255, 102, 0, 0.3)',
+            whiteSpace: 'nowrap'
           }}
         >
           {nextText}

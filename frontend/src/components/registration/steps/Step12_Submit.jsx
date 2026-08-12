@@ -82,8 +82,7 @@ const Step12_Submit = () => {
   };
 
   const handleDone = () => {
-    resetForm();
-    setStep(1);
+    window.location.href = '/';
   };
 
   return (
@@ -237,7 +236,7 @@ const Step12_Submit = () => {
             transition: 'all 0.2s ease'
           }}
         >
-          Done → (Start New Application)
+          Done → (View Application & Profile Menu)
         </button>
       ) : (
         <div style={{ display: 'flex', gap: '16px', marginTop: '12px' }}>

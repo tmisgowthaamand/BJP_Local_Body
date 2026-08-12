@@ -22,15 +22,47 @@ const RegistrationHeader = () => {
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
+        {/* BJP Lotus Logo */}
+        <img
+          src="/bjp_logo.svg"
+          alt="BJP"
+          style={{
+            height: '40px',
+            width: 'auto',
+            flexShrink: 0,
+            filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))'
+          }}
+          onError={(e) => { e.target.src = '/bjp_logo.png'; }}
+        />
         <div>
           <h1 style={{ fontSize: '17px', fontWeight: 800, margin: 0, letterSpacing: '0.2px', lineHeight: 1.2 }}>
             Local Body Candidate Application
           </h1>
-          <p style={{ fontSize: '11px', margin: '2px 0 0 0', opacity: 0.9, fontWeight: 400 }}>
+          <p style={{ fontSize: '11px', margin: '2px 0 0 0', opacity: 0.95, fontWeight: 400 }}>
             Simple steps • Verified information • Stronger local leadership
           </p>
         </div>
       </div>
+      <a
+        href="/"
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '6px',
+          padding: '6px 14px',
+          borderRadius: '20px',
+          backgroundColor: 'rgba(255, 255, 255, 0.2)',
+          color: '#FFFFFF',
+          textDecoration: 'none',
+          fontWeight: 700,
+          fontSize: '12px',
+          backdropFilter: 'blur(4px)',
+          border: '1px solid rgba(255, 255, 255, 0.4)',
+          whiteSpace: 'nowrap'
+        }}
+      >
+        <i className="bi bi-house-door-fill" /> Home Portal
+      </a>
     </header>
   );
 };

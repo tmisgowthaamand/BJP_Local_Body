@@ -1,4 +1,6 @@
 export const ta = {
+  "Local Body Candidate Application 2026": "உள்ளாட்சித் தேர்தல் வேட்பாளர் விண்ணப்பம் 2026",
+  "Join the world's largest political organization to empower local governance and serve Tamil Nadu with dedicated leadership. Click below to begin your candidate registration.": "வலுவான உள்ளாட்சி தலைமை மற்றும் மக்கள் சேவைக்காக உலகின் மிகப்பெரிய அரசியல் இயக்கத்துடன் இணையுங்கள். உங்கள் வேட்பாளர் பதிவை தொடங்க கீழே கிளிக் செய்யவும்.",
   "World's Largest. India's Biggest. Soon to be Tamil Nadu's No. 1.": "உலகின் மிகப் பெரிய அமைப்பு. இந்தியாவின் மிகப் பெரிய கட்சி. விரைவில் தமிழ்நாட்டின் No.1.",
   "You are joining the world's leading political organization. Click below to register for Central Government welfare schemes.": "நீங்கள் உலகின் முன்னணி அரசியல் அமைப்பில் இணைகிறீர்கள். மத்திய அரசு நலத்திட்டங்களுக்கு பதிவு செய்ய கீழே கிளிக் செய்யவும்.",
   "Start": "தொடங்கு",

@@ -10,13 +10,15 @@ const Step11_Review = () => {
     setExpandedSection(expandedSection === idx ? null : idx);
   };
 
+  const cleanFullName = (state.full_name || 'Verified Voter').replace(/\s*-\s*$/, '').trim();
+
   const sections = [
     {
       title: '1. Personal Details',
       stepNum: 1,
       items: [
         { label: 'Mobile Number', value: state.mobile ? `+91 ${state.mobile}` : 'Not provided' },
-        { label: 'Full Name', value: state.full_name || 'Verified Voter' }
+        { label: 'Full Name', value: cleanFullName || 'Verified Voter' }
       ]
     },
     {
@@ -68,24 +70,17 @@ const Step11_Review = () => {
   ];
 
   return (
-    <div style={{
-      backgroundColor: '#FFFFFF',
-      borderRadius: '16px',
-      padding: '36px 32px',
-      boxShadow: '0 10px 30px rgba(0, 0, 0, 0.05)',
-      border: '1px solid #E0E0E0',
-      borderTop: '4px solid #FF6600'
-    }}>
+    <div className="step-card-container">
 
       {/* Step Header */}
-      <div style={{ marginBottom: '24px' }}>
+      <div style={{ marginBottom: '20px' }}>
         <div style={{
-          fontSize: '13px',
+          fontSize: '12px',
           fontWeight: 800,
           color: '#FF6600',
           textTransform: 'uppercase',
           letterSpacing: '1px',
-          marginBottom: '6px'
+          marginBottom: '4px'
         }}>
           08 APPLICATION REVIEW
         </div>
@@ -97,22 +92,22 @@ const Step11_Review = () => {
         alignItems: 'center',
         gap: '16px',
         marginBottom: '24px',
-        padding: '20px',
+        padding: '16px',
         backgroundColor: '#FFF8F3',
         borderRadius: '14px',
         border: '1px solid #FFE0B2'
       }}>
         <div
           style={{
-            width: '52px',
-            height: '52px',
+            width: '48px',
+            height: '48px',
             borderRadius: '12px',
             background: 'linear-gradient(135deg, #FF6600 0%, #FF8C00 100%)',
             color: '#FFFFFF',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: '26px',
+            fontSize: '24px',
             flexShrink: 0,
             boxShadow: '0 4px 12px rgba(255, 102, 0, 0.25)'
           }}
@@ -132,31 +127,36 @@ const Step11_Review = () => {
       {/* Verification Status Bar */}
       <div style={{
         display: 'flex',
-        justify: 'space-between',
+        justifyContent: 'space-between',
         alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: '10px',
         marginBottom: '20px',
-        padding: '14px 18px',
+        padding: '12px 14px',
         backgroundColor: '#E8F5E9',
         borderRadius: '12px',
-        border: '1px solid #A5D6A7'
+        border: '1px solid #A5D6A7',
+        width: '100%',
+        boxSizing: 'border-box'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: 700, color: '#1B5E20' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13.5px', fontWeight: 700, color: '#1B5E20' }}>
           <span>✅</span> All 6 Sections Verified
         </div>
         <button
           type="button"
           onClick={() => setStep(1)}
           style={{
-            padding: '8px 16px',
+            padding: '6px 12px',
             backgroundColor: '#FFFFFF',
             border: '1.5px solid #FF6600',
             color: '#FF6600',
             borderRadius: '8px',
             fontWeight: 700,
-            fontSize: '13px',
+            fontSize: '12.5px',
             cursor: 'pointer',
             boxShadow: '0 2px 6px rgba(255, 102, 0, 0.1)',
-            transition: 'all 0.15s ease'
+            transition: 'all 0.15s ease',
+            whiteSpace: 'nowrap'
           }}
         >
           ✏️ Edit All Sections

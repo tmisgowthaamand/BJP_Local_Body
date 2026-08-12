@@ -110,7 +110,7 @@ const verifyOtp = async (req, res) => {
     const existingEnquiry = await Enquiry.findOne({ mobile: cleanMobile }).sort({ created_at: -1 });
 
     const existingApplication = existingEnquiry ? {
-      applicationId: existingEnquiry.application_id || `bjp2026-${cleanMobile.slice(-6)}`,
+      applicationId: (existingEnquiry.application_id || `BJP2026-${cleanMobile.slice(-6)}`).toUpperCase(),
       full_name: existingEnquiry.full_name,
       mobile: existingEnquiry.mobile,
       district: existingEnquiry.district,
@@ -132,7 +132,7 @@ const verifyOtp = async (req, res) => {
 
       const token = existingUser ? generateToken(existingUser._id, existingUser.tokenVersion) : null;
       const clientOrigin = process.env.FRONTEND_URL || process.env.CLIENT_URL || req.get('origin') || 'https://bjp-scheme.vercel.app';
-      const referralCode = existingUser?.referralCode || existingEnquiry?.application_id || `bjp2026-${cleanMobile.slice(-6)}`;
+      const referralCode = ((existingUser?.referralCode || existingEnquiry?.application_id || `BJP2026-${cleanMobile.slice(-6)}`)).toUpperCase();
       const referralLink = `${clientOrigin.replace(/\/$/, '')}/r/${referralCode}`;
       const voterName = existingEnquiry?.full_name || existingUser?.voterName || 'Candidate';
 

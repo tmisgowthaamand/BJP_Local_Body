@@ -219,8 +219,8 @@ function WelcomeBannerMsg({ onStart }) {
         onError={(e) => { e.target.style.display = 'none' }} 
       />
       <div className="banner-content">
-        <h2>{t("Local Body Election Application")}</h2>
-        <p>{t("You are joining the world's leading political organization. Click below to register for local body candidate application.")}</p>
+        <h2>{t("Local Body Candidate Application 2026")}</h2>
+        <p>{t("Join the world's largest political organization to empower local governance and serve Tamil Nadu with dedicated leadership. Click below to begin your candidate registration.")}</p>
         <button className="btn-start" onClick={onStart}>
           <i className="bi bi-play-circle-fill" /> {t('Start')}
         </button>
@@ -3355,7 +3355,9 @@ export default function ChatbotPage() {
   const { t } = useLang()
   const [activeView, setActiveView] = useState('chat')
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [submittedAppId, setSubmittedAppId] = useState('')
+  const [submittedAppId, setSubmittedAppId] = useState(() => {
+    return localStorage.getItem('bjp_candidate_app_id') || (localStorage.getItem('bjp_candidate_app_details') ? 'submitted' : '')
+  })
 
   // ── Message helpers ───────────────────────────────────────
   const addMsg = useCallback((from, type, payload = {}) => {
@@ -3374,18 +3376,63 @@ export default function ChatbotPage() {
   }, [addMsg])
 
   useEffect(() => {
-    const handleAppSubmitted = () => {
-      const appId = localStorage.getItem('bjp_candidate_app_id') || ''
+    const checkAppSubmitted = () => {
+      const appId = localStorage.getItem('bjp_candidate_app_id') || (localStorage.getItem('bjp_candidate_app_details') ? 'submitted' : '')
+      if (appId) {
+        setSubmittedAppId(appId)
+        setChatState(S.DONE)
+      }
+    }
+    checkAppSubmitted()
+
+    const handleAppSubmitted = async () => {
+      const appId = localStorage.getItem('bjp_candidate_app_id') || (localStorage.getItem('bjp_candidate_app_details') ? 'submitted' : '')
       setSubmittedAppId(appId)
+      setChatState(S.DONE)
+      setActiveView('chat')
+
+      let details = {}
+      try {
+        details = JSON.parse(localStorage.getItem('bjp_candidate_app_details') || '{}')
+      } catch { /* ignore */ }
+      const rawName = details.name || 'Candidate'
+      const name = rawName.replace(/\s*-\s*$/, '').trim()
+      const mobile = details.mobile || ''
+      const finalId = (details.applicationId || appId || 'BJP2026-SUBMITTED').toUpperCase();
+
+      const msgText = t('🎉 *Candidate Registration Submitted Successfully!*\n\nPhone number *{mobile}* verified for candidate *{name}* (ID: *{appId}*).\n\n🔓 "My Profile" and "My Application" are now unlocked in the sidebar.', { name, mobile, appId: finalId });
+
+      setMessages([
+        {
+          id: `${Date.now()}-submitted`,
+          from: 'bot',
+          type: 'text',
+          text: msgText,
+          ts: new Date()
+        }
+      ])
     }
     const handleVerifiedExisting = async (e) => {
       const app = e.detail || {}
-      const appId = app.applicationId || localStorage.getItem('bjp_candidate_app_id') || ''
-      const name = app.full_name || 'Candidate'
+      const appId = (app.applicationId || localStorage.getItem('bjp_candidate_app_id') || 'BJP2026-SUBMITTED').toUpperCase()
+      const rawName = app.full_name || app.name || 'Candidate'
+      const name = rawName.replace(/\s*-\s*$/, '').trim()
       const mobile = app.mobile || ''
       setSubmittedAppId(appId)
+      setChatState(S.DONE)
       setActiveView('chat')
-      await botSay(t('👋 Welcome back {name}! Phone number {mobile} verified. Your candidate registration application (ID: {appId}) was successfully submitted!\n\n🔓 "My Profile" and "My Application" are now unlocked in the sidebar.', { name, mobile, appId }), 300)
+
+      const msgText = t('👋 *Welcome Back {name}!*\n\nPhone number *{mobile}* verified for candidate *{name}* (ID: *{appId}*).\n\n🔓 "My Profile" and "My Application" are now unlocked in the sidebar.', { name, mobile, appId });
+
+      setMessages([
+        {
+          id: `${Date.now()}-welcome`,
+          from: 'bot',
+          type: 'text',
+          text: msgText,
+          ts: new Date()
+        }
+      ])
     }
 
     window.addEventListener('candidate_app_submitted', handleAppSubmitted)
@@ -3713,8 +3760,31 @@ export default function ChatbotPage() {
         setChatState(S.DONE)
       }, 300)
     } else {
-      addMsg('bot', 'welcome_banner', {})
-      setChatState(S.WELCOME)
+      const submittedAppDetails = localStorage.getItem('bjp_candidate_app_details') || localStorage.getItem('bjp_candidate_app_id')
+      if (submittedAppDetails) {
+        setChatState(S.DONE)
+        let details = {}
+        try {
+          details = JSON.parse(localStorage.getItem('bjp_candidate_app_details') || '{}')
+        } catch { /* ignore */ }
+        const rawName = details.name || 'Candidate'
+        const name = rawName.replace(/\s*-\s*$/, '').trim()
+        const mobile = details.mobile || ''
+        const appId = (details.applicationId || localStorage.getItem('bjp_candidate_app_id') || 'BJP2026-SUBMITTED').toUpperCase()
+        
+        setMessages([
+          {
+            id: `${Date.now()}-welcome`,
+            from: 'bot',
+            type: 'text',
+            text: t('👋 *Welcome Back {name}!*\n\nPhone number *{mobile}* verified for candidate *{name}* (ID: *{appId}*).\n\n🔓 "My Profile" and "My Application" are now unlocked in the sidebar.', { name, mobile, appId }),
+            ts: new Date()
+          }
+        ])
+      } else {
+        addMsg('bot', 'welcome_banner', {})
+        setChatState(S.WELCOME)
+      }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -4342,6 +4412,7 @@ export default function ChatbotPage() {
               { icon: 'journal-text',  label: 'My Application', action: 'my_application', desc: 'View submitted candidate application' },
             ].map((item) => {
               const isUnlocked = Boolean(
+                isDone ||
                 submittedAppId ||
                 (cardRef.current && (cardRef.current.voter_name || cardRef.current.epic_no)) ||
                 (profileRef.current && (profileRef.current.voterName || profileRef.current.name))
@@ -4457,6 +4528,7 @@ export default function ChatbotPage() {
               <div
                 className="chat-header-avatar"
                 onClick={() => isDone && handleSidebarOpen()}
+                style={{ cursor: isDone ? 'pointer' : 'default' }}
               >
                 <img src="/bjp_logo.svg" alt="BJP" onError={(e) => { e.target.style.display = 'none' }} />
               </div>
@@ -4470,15 +4542,31 @@ export default function ChatbotPage() {
                   )}
                 </div>
               </div>
-              <div className="chat-header-actions" style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+              <div className="chat-header-actions" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 <LanguageToggle />
                 {isDone && (
                   <button
-                    className="chat-header-btn"
+                    className="chat-header-btn mobile-menu-btn"
                     onClick={handleSidebarOpen}
-                    title="Menu"
+                    title={t('Menu')}
+                    aria-label={t('Menu')}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: '38px',
+                      height: '38px',
+                      padding: 0,
+                      borderRadius: '50%',
+                      backgroundColor: '#FF6600',
+                      color: '#FFFFFF',
+                      border: 'none',
+                      cursor: 'pointer',
+                      boxShadow: '0 2px 8px rgba(255,102,0,0.35)',
+                      flexShrink: 0
+                    }}
                   >
-                    <i className="bi bi-list" />
+                    <i className="bi bi-list" style={{ fontSize: '22px', lineHeight: 1 }} />
                   </button>
                 )}
               </div>
@@ -4632,16 +4720,12 @@ export default function ChatbotPage() {
             </div>
             <nav className="sidebar-nav">
               {[
-                { icon: 'journal-check',       label: 'Candidate Registration',  action: 'candidate_registration' },
-                { icon: 'file-earmark-person',  label: 'My Application',          action: 'my_application' },
                 { icon: 'person-circle',       label: 'My Profile',              action: 'profile' },
-                { icon: 'check2-all',          label: 'My Schemes',              action: 'my_schemes' },
-                { icon: 'link-45deg',          label: 'Referral Link',           action: 'referral' },
-                { icon: 'people-fill',         label: 'My Referrals',            action: 'my_referrals' },
-                { icon: 'award-fill',          label: 'Be a Booth President',    action: 'be_booth_president' },
+                { icon: 'journal-text',        label: 'My Application',          action: 'my_application' },
               ].map((item) => {
                 const isProfileOrApp = item.action === 'profile' || item.action === 'my_application';
                 const isUnlocked = Boolean(
+                  isDone ||
                   submittedAppId ||
                   (cardRef.current && (cardRef.current.voter_name || cardRef.current.epic_no)) ||
                   (profileRef.current && (profileRef.current.voterName || profileRef.current.name))
@@ -4657,7 +4741,7 @@ export default function ChatbotPage() {
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                         <i className={`bi bi-${item.icon}`} />
-                        <span>{t(item.label)}</span>
+                        <span style={{ fontWeight: 600 }}>{t(item.label)}</span>
                       </div>
                       {locked && <i className="bi bi-lock-fill" style={{ fontSize: '14px', color: '#9E9E9E' }} />}
                     </div>
@@ -4665,13 +4749,11 @@ export default function ChatbotPage() {
                 )
               })}
             </nav>
-            {Boolean(submittedAppId || cardRef.current?.voter_name || profileRef.current?.voterName) && (
-              <div className="sidebar-footer">
-                <button className="sidebar-logout-btn" onClick={handleLogout}>
-                  <i className="bi bi-box-arrow-left" /> {t('Logout')}
-                </button>
-              </div>
-            )}
+            <div className="sidebar-footer">
+              <button className="sidebar-logout-btn" onClick={handleLogout}>
+                <i className="bi bi-box-arrow-left" /> {t('Logout')}
+              </button>
+            </div>
           </div>
         </div>
       )}

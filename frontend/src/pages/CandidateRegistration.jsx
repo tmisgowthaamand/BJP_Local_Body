@@ -3,7 +3,6 @@ import { ApplicationProvider, useApplication } from '../context/ApplicationConte
 import RegistrationHeader from '../components/registration/RegistrationHeader';
 import RegistrationFooter from '../components/registration/RegistrationFooter';
 import ProgressBar from '../components/registration/ProgressBar';
-import ChatbotWidget from '../components/registration/ChatbotWidget';
 
 import Step01_Mobile from '../components/registration/steps/Step01_Mobile';
 import Step02_OTP from '../components/registration/steps/Step02_OTP';
@@ -66,7 +65,6 @@ const CandidateRegistrationContent = () => {
       </main>
 
       <RegistrationFooter />
-      <ChatbotWidget />
     </div>
   );
 };

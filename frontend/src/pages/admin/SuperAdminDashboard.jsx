@@ -792,7 +792,7 @@ const SuperAdminDashboard = () => {
                       const latestApp = voter.applications?.[0] || voter.applications?.[voter.applications.length - 1];
                       const rowNum = (currentPage - 1) * LIMIT + idx + 1;
                       return (
-                        <tr key={voter.epicNo || idx}
+                        <tr key={voter._id || voter.id || `${voter.epicNo || 'voter'}-${idx}`}
                           style={{ borderBottom: '1px solid var(--color-linen)', transition: 'background 0.15s', cursor: 'pointer' }}
                           onClick={() => setSelectedVoterTimeline(voter)}
                           onMouseEnter={e => e.currentTarget.style.background = 'var(--color-fog-gray)'}

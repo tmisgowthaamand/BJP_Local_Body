@@ -3,19 +3,24 @@ import { useApplication } from '../../../context/ApplicationContext';
 import StepNav from '../StepNav';
 import axios from 'axios';
 
-const InfoCard = ({ icon, label, value }) => (
-  <div style={{
-    backgroundColor: '#FFFFFF',
-    borderRadius: '12px',
-    padding: '14px 16px',
-    boxShadow: '0 2px 10px rgba(0,0,0,0.06)',
-    border: '1px solid #FFE0B2'
-  }}>
-    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
-      <span style={{ fontSize: '14px' }}>{icon}</span>
-      <span style={{ fontSize: '11px', fontWeight: 700, color: '#FF6600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{label}</span>
+const InfoCard = ({ iconClass, label, value }) => (
+  <div className="voter-info-card">
+    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+      <div style={{
+        width: '22px',
+        height: '22px',
+        borderRadius: '6px',
+        backgroundColor: '#FFF3E0',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexShrink: 0
+      }}>
+        <i className={`bi ${iconClass}`} style={{ color: '#FF6600', fontSize: '12px' }} />
+      </div>
+      <span style={{ fontSize: '10.5px', fontWeight: 700, color: '#FF6600', textTransform: 'uppercase', letterSpacing: '0.4px' }}>{label}</span>
     </div>
-    <div style={{ fontSize: '15px', fontWeight: 700, color: '#1A1A1A' }}>{value || '—'}</div>
+    <div className="card-value">{value || '—'}</div>
   </div>
 );
 
@@ -56,7 +61,7 @@ const Step04_VoterID = () => {
         setVerifiedVoter(voter);
         updateForm({
           voter_epic: voter.EPIC_NO || cleanEpic,
-          full_name: voter.VOTER_NAME_EN || voter.VOTER_NAME,
+          full_name: (voter.VOTER_NAME_EN || voter.VOTER_NAME || '').replace(/\s*-\s*$/, '').trim(),
           assembly_no: voter.ASSEMBLY_NO,
           assembly_name: voter.AC_NAME || voter.ASSEMBLY_NAME || voter.assembly_name,
           booth_no: voter.PART_NO,
@@ -83,9 +88,11 @@ const Step04_VoterID = () => {
     return true;
   };
 
-  const voterName = verifiedVoter
+  const rawVoterName = verifiedVoter
     ? (verifiedVoter.VOTER_NAME_EN || verifiedVoter.VOTER_NAME || 'Verified Voter')
     : '';
+  const voterName = rawVoterName.replace(/\s*-\s*$/, '').trim();
+
   const assemblyName = verifiedVoter
     ? (verifiedVoter.AC_NAME || verifiedVoter.ASSEMBLY_NAME || ('Assembly ' + verifiedVoter.ASSEMBLY_NO))
     : '';
@@ -94,16 +101,7 @@ const Step04_VoterID = () => {
     : '';
 
   return (
-    <div style={{
-      backgroundColor: '#FFFFFF',
-      borderRadius: '16px',
-      padding: '32px',
-      boxShadow: '0 10px 30px rgba(0, 0, 0, 0.06)',
-      borderLeft: '1px solid #FFE0B2',
-      borderRight: '1px solid #FFE0B2',
-      borderBottom: '1px solid #FFE0B2',
-      borderTop: '4px solid #FF6600'
-    }}>
+    <div className="step-card-container">
 
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '24px' }}>
@@ -113,11 +111,11 @@ const Step04_VoterID = () => {
           color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontSize: '26px', flexShrink: 0, boxShadow: '0 4px 14px rgba(255, 102, 0, 0.3)'
         }}>
-          🎴
+          <i className="bi bi-card-heading" />
         </div>
         <div>
-          <h2 style={{ fontSize: '22px', fontWeight: 800, margin: 0, color: '#1B5E20' }}>Voter ID (EPIC) Verification</h2>
-          <p style={{ fontSize: '14px', color: '#2E7D32', margin: '4px 0 0 0', lineHeight: 1.4 }}>
+          <h2 style={{ fontSize: '20px', fontWeight: 800, margin: 0, color: '#1B5E20' }}>Voter ID (EPIC) Verification</h2>
+          <p style={{ fontSize: '13px', color: '#2E7D32', margin: '4px 0 0 0', lineHeight: 1.4 }}>
             Verification against official electoral rolls across 234 Assembly Constituencies.
           </p>
         </div>
@@ -175,24 +173,17 @@ const Step04_VoterID = () => {
         </div>
       </div>
 
-      {/* Verified Voter Card — styled like image 1 */}
+      {/* Verified Voter Card */}
       {verifiedVoter && (
-        <div style={{
-          backgroundColor: '#FFFFFF',
-          borderRadius: '16px',
-          padding: '24px',
-          marginBottom: '24px',
-          border: '1px solid #FFE0B2',
-          boxShadow: '0 4px 16px rgba(255, 102, 0, 0.07)'
-        }}>
+        <div className="voter-card-wrapper">
           {/* Voter Name Heading */}
-          <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+          <div style={{ textAlign: 'center', marginBottom: '16px' }}>
             <div style={{
               display: 'inline-flex', alignItems: 'center', gap: '8px',
               backgroundColor: '#E8F5E9', borderRadius: '20px',
               padding: '5px 14px', marginBottom: '10px'
             }}>
-              <span style={{ color: '#2E7D32', fontSize: '14px' }}>✅</span>
+              <i className="bi bi-patch-check-fill" style={{ color: '#2E7D32', fontSize: '14px' }} />
               <span style={{ fontSize: '12px', fontWeight: 700, color: '#2E7D32', letterSpacing: '0.3px' }}>VOTER VERIFIED</span>
             </div>
             <h3 style={{
@@ -204,26 +195,23 @@ const Step04_VoterID = () => {
           </div>
 
           {/* Info Cards Grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-            <InfoCard icon="🪪" label="EPIC Number" value={verifiedVoter.EPIC_NO} />
-            <InfoCard icon="📱" label="Mobile Number" value={verifiedVoter.MOBILE_NUMBER || '—'} />
-            <InfoCard icon="👤" label="Gender" value={verifiedVoter.GENDER || 'Unspecified'} />
-            <InfoCard icon="🗺️" label="State" value="Tamil Nadu" />
-            <InfoCard icon="📍" label="Assembly" value={assemblyName} />
-            <InfoCard icon="🏛️" label="District" value={district} />
-            <InfoCard icon="🏠" label="Polling Booth" value={verifiedVoter.BOOTH_NAME || ('Booth ' + verifiedVoter.PART_NO)} />
+          <div className="voter-info-grid">
+            <InfoCard iconClass="bi-vcard-fill" label="EPIC Number" value={verifiedVoter.EPIC_NO} />
+            <InfoCard iconClass="bi-phone-fill" label="Mobile Number" value={verifiedVoter.MOBILE_NUMBER || '—'} />
+            <InfoCard iconClass="bi-person-fill" label="Gender" value={verifiedVoter.GENDER || 'Unspecified'} />
+            <InfoCard iconClass="bi-map-fill" label="State" value="Tamil Nadu" />
+            <InfoCard iconClass="bi-geo-alt-fill" label="Assembly" value={assemblyName} />
+            <InfoCard iconClass="bi-building-fill" label="District" value={district} />
+            <InfoCard iconClass="bi-house-door-fill" label="Polling Booth" value={verifiedVoter.BOOTH_NAME || ('Booth ' + verifiedVoter.PART_NO)} />
           </div>
         </div>
       )}
 
       {/* Error */}
       {error && (
-        <div style={{
-          padding: '12px 16px', backgroundColor: '#FFEBEE', color: '#C62828',
-          borderRadius: '10px', fontSize: '13.5px', marginBottom: '20px',
-          borderLeft: '4px solid #D32F2F', fontWeight: 600
-        }}>
-          ⚠️ {error}
+        <div className="reg-error-box">
+          <span className="error-icon">⚠️</span>
+          <span className="error-text">{error}</span>
         </div>
       )}
 
