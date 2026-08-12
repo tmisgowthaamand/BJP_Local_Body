@@ -16,6 +16,7 @@ export default defineConfig({
   build: {
     target: 'es2015',
     cssCodeSplit: true,
+    sourcemap: true,
     rollupOptions: {
       output: {
         manualChunks(id) {

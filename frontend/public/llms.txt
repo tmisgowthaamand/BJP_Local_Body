@@ -1,0 +1,14 @@
+# BJP Tamil Nadu Local Body Candidate Application Portal 2026
+
+> Official candidate application portal for BJP local body elections in Tamil Nadu.
+
+## System Overview
+This web application enables BJP party candidates across Tamil Nadu to apply for Local Body elections across 12 structured steps.
+
+## Key Features & Endpoints
+- Candidate Registration: /candidate-registration
+- Admin Portal: /admin
+- Verification: Mobile OTP & EPIC Voter ID Verification
+
+## Technical Stack
+- React 18, Vite, Node.js, Express, MongoDB Atlas, Cloudinary
