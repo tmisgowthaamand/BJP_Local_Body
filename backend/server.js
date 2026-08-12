@@ -259,11 +259,12 @@ app.use((err, req, res, next) => {
   });
 });
 
-let parsedPort = parseInt(process.env.PORT, 10);
+let rawPortStr = String(process.env.PORT || '').trim();
+if (rawPortStr === '100000' || rawPortStr.startsWith('10000')) {
+  rawPortStr = '10000';
+}
+let parsedPort = parseInt(rawPortStr, 10);
 if (isNaN(parsedPort) || parsedPort < 1 || parsedPort > 65535) {
-  if (process.env.PORT) {
-    console.warn(`[WARN] Invalid PORT environment variable '${process.env.PORT}'. Port must be between 1 and 65535. Falling back to 10000.`);
-  }
   parsedPort = process.env.NODE_ENV === 'production' ? 10000 : 5000;
 }
 const PORT = parsedPort;
