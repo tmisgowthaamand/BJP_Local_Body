@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApplication } from '../../../context/ApplicationContext';
-import axios from 'axios';
+import API from '../../../utils/api';
 
 const Step12_Submit = () => {
   const { state, updateForm, resetForm, setStep } = useApplication();
@@ -42,7 +42,7 @@ const Step12_Submit = () => {
         preference_3: state.preference_3
       };
 
-      const res = await axios.post('/api/registrations/submit', payload);
+      const res = await API.post('/registrations/submit', payload);
 
       if (res.data.success) {
         updateForm({

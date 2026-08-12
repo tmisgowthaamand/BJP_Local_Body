@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import axios from 'axios';
+import API from '../utils/api';
 
 const SYSTEM_PROMPT = `You are the official assistant for the BJP Local Body Candidate Application portal.
 
@@ -32,7 +32,7 @@ export const useChatbot = (currentStep = 1) => {
 
     try {
       // Proxy or call chat API endpoint
-      const res = await axios.post('/api/user-chat/message', {
+      const res = await API.post('/user-chat/message', {
         message: userText,
         currentStep,
         systemPrompt: SYSTEM_PROMPT,

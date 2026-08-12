@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import API from '../../../utils/api';
 import { useApplication } from '../../../context/ApplicationContext';
 import StepNav from '../StepNav';
 import { ALL_DISTRICTS } from '../../../data/tnLocalBodies';
@@ -70,7 +70,7 @@ const Step06_LocalBodyDetails = () => {
     setSelectedAssemblyNo('');
     setSelectedBooth('');
 
-    axios.get(`/api/registrations/assemblies?district=${encodeURIComponent(selectedDistrict)}`)
+    API.get(`/registrations/assemblies?district=${encodeURIComponent(selectedDistrict)}`)
       .then(res => {
         if (res.data?.success) setAssemblies(res.data.assemblies || []);
         else setAssemblies([]);
@@ -90,7 +90,7 @@ const Step06_LocalBodyDetails = () => {
     setBoothList([]);
     setSelectedBooth('');
 
-    axios.get(`/api/registrations/booths?assembly_no=${encodeURIComponent(selectedAssemblyNo)}`)
+    API.get(`/registrations/booths?assembly_no=${encodeURIComponent(selectedAssemblyNo)}`)
       .then(res => {
         if (res.data?.success) setBoothList(res.data.booths || []);
         else setBoothList([]);

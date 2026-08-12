@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useApplication } from '../../../context/ApplicationContext';
 import { useOTP } from '../../../hooks/useOTP';
 import StepNav from '../StepNav';
-import axios from 'axios';
+import API from '../../../utils/api';
 
 const Step02_OTP = () => {
   const { state, updateForm, nextStep, prevStep, setStep } = useApplication();
@@ -58,12 +58,12 @@ const Step02_OTP = () => {
     try {
       let res;
       try {
-        res = await axios.post('/api/registrations/verify-otp', {
+        res = await API.post('/registrations/verify-otp', {
           mobile: state.mobile,
           otp: otpValue
         });
       } catch (err1) {
-        res = await axios.post('/api/verify-otp', {
+        res = await API.post('/verify-otp', {
           mobile: state.mobile,
           otp: otpValue
         });

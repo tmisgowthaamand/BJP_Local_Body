@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import API from '../utils/api';
 
 export const useOTP = (mobile, initialSeconds = 30) => {
   const [secondsLeft, setSecondsLeft] = useState(initialSeconds);
@@ -23,7 +23,7 @@ export const useOTP = (mobile, initialSeconds = 30) => {
     setLoading(true);
     setError('');
     try {
-      const res = await axios.post('/api/registrations/send-otp', { mobile });
+      const res = await API.post('/registrations/send-otp', { mobile });
       if (res.data.success) {
         setSecondsLeft(30);
         setCanResend(false);

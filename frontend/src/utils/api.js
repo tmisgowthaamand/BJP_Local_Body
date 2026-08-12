@@ -1,7 +1,16 @@
 import axios from 'axios';
 
+const getApiBaseUrl = () => {
+  const envUrl = import.meta.env.VITE_API_URL;
+  if (envUrl) return envUrl.replace(/\/$/, '') + '/api';
+  if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+    return 'https://bjp-local-body.onrender.com/api';
+  }
+  return '/api';
+};
+
 const API = axios.create({
-  baseURL: import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api` : '/api'
+  baseURL: getApiBaseUrl()
 });
 
 // Interceptor to attach User or Admin JWT token

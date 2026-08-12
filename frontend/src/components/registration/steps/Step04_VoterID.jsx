@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useApplication } from '../../../context/ApplicationContext';
 import StepNav from '../StepNav';
-import axios from 'axios';
+import API from '../../../utils/api';
 
 const InfoCard = ({ iconClass, label, value }) => (
   <div className="voter-info-card">
@@ -51,9 +51,9 @@ const Step04_VoterID = () => {
     try {
       let res;
       try {
-        res = await axios.get(`/api/registrations/voter/${encodeURIComponent(cleanEpic)}`);
+        res = await API.get(`/registrations/voter/${encodeURIComponent(cleanEpic)}`);
       } catch (err1) {
-        res = await axios.get(`/api/voter/${encodeURIComponent(cleanEpic)}`);
+        res = await API.get(`/voter/${encodeURIComponent(cleanEpic)}`);
       }
 
       if (res.data && res.data.found && res.data.voter) {

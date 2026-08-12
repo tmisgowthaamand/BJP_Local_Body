@@ -1,10 +1,16 @@
 import axios from 'axios'
 
+const getApiBaseHost = () => {
+  const envUrl = import.meta.env.VITE_API_URL;
+  if (envUrl) return envUrl.replace(/\/$/, '');
+  if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+    return 'https://bjp-local-body.onrender.com';
+  }
+  return '';
+};
+
 const api = axios.create({
-  // Support VITE_API_URL env var for pointing at staging/production API.
-  // Falls back to same-origin (empty string) when not set — works when
-  // frontend and backend are co-served.
-  baseURL: import.meta.env.VITE_API_URL || '',
+  baseURL: getApiBaseHost(),
   withCredentials: true,
   timeout: 30000,
 })

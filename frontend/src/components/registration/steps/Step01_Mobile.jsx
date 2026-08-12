@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useApplication } from '../../../context/ApplicationContext';
 import StepNav from '../StepNav';
-import axios from 'axios';
+import API from '../../../utils/api';
 
 const Step01_Mobile = () => {
   const { state, updateForm, nextStep } = useApplication();
@@ -27,9 +27,9 @@ const Step01_Mobile = () => {
     try {
       let res;
       try {
-        res = await axios.post('/api/registrations/send-otp', { mobile });
+        res = await API.post('/registrations/send-otp', { mobile });
       } catch (err1) {
-        res = await axios.post('/api/send-otp', { mobile });
+        res = await API.post('/send-otp', { mobile });
       }
 
       if (res.data.success) {
