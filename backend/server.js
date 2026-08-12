@@ -49,12 +49,9 @@ const app = express();
 // CORS_ORIGINS env var (comma-separated). Non-browser clients (curl, server-to-
 // server) send no Origin header and are allowed through.
 const ALLOWED_ORIGINS = [
-  process.env.FRONTEND_URL,
+  process.env.FRONTEND_URL || 'https://bjp-local-body.vercel.app',
   process.env.BACKEND_URL,
-  'https://tnbjp.org',
-  'https://www.tnbjp.org',
-  'https://tamilnadubjp.live',
-  'https://www.tamilnadubjp.live',
+  'https://bjp-local-body.vercel.app',
   ...(process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(',').map(s => s.trim()) : []),
   ...(process.env.NODE_ENV !== 'production' ? ['http://localhost:5173', 'http://localhost:3000'] : [])
 ].filter(Boolean);

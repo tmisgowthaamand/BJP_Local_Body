@@ -34,4 +34,4 @@ services:
       - key: STATE_ADMIN_PASSWORD
         sync: false
       - key: FRONTEND_URL
-        value: https://tnbjp.org
+        value: https://bjp-local-body.vercel.app
