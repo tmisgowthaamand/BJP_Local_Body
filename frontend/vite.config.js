@@ -14,12 +14,22 @@ export default defineConfig({
     }
   },
   build: {
+    target: 'es2015',
+    cssCodeSplit: true,
     rollupOptions: {
       output: {
-        entryFileNames: `assets/[name]-[hash]-v2.js`,
-        chunkFileNames: `assets/[name]-[hash]-v2.js`,
-        assetFileNames: `assets/[name]-[hash]-v2.[ext]`
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('chart.js') || id.includes('react-chartjs-2') || id.includes('xlsx')) {
+              return 'vendor-heavy-tools';
+            }
+          }
+        },
+        entryFileNames: `assets/[name]-[hash]-v3.js`,
+        chunkFileNames: `assets/[name]-[hash]-v3.js`,
+        assetFileNames: `assets/[name]-[hash]-v3.[ext]`
       }
-    }
+    },
+    chunkSizeWarningLimit: 800
   }
 });
