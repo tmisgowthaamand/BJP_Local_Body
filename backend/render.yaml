@@ -1,0 +1,36 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Render Infrastructure-as-Code (Blueprint Specs)
+# BJP Local Body Election Registration Portal Backend API
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+  - type: web
+    name: bjp-local-body-backend
+    runtime: node
+    region: singapore
+    plan: free
+    buildCommand: npm install
+    startCommand: node server.js
+    autoDeploy: true
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: JWT_SECRET
+        generateValue: true
+      - key: MONGO_VOTER_URL
+        sync: false
+      - key: MONGO_VOTER_DB_NAME
+        value: voter_db
+      - key: MONGO_APP_URL
+        sync: false
+      - key: MONGO_APP_DB_NAME
+        value: election_app
+      - key: SUPER_ADMIN_PASSWORD
+        sync: false
+      - key: STATE_ADMIN_PASSWORD
+        sync: false
+      - key: FRONTEND_URL
+        value: https://tnbjp.org
