@@ -259,7 +259,14 @@ app.use((err, req, res, next) => {
   });
 });
 
-const PORT = process.env.PORT || 5000;
+let parsedPort = parseInt(process.env.PORT, 10);
+if (isNaN(parsedPort) || parsedPort < 1 || parsedPort > 65535) {
+  if (process.env.PORT) {
+    console.warn(`[WARN] Invalid PORT environment variable '${process.env.PORT}'. Port must be between 1 and 65535. Falling back to 10000.`);
+  }
+  parsedPort = process.env.NODE_ENV === 'production' ? 10000 : 5000;
+}
+const PORT = parsedPort;
 
 // Connect DBs and start server
 const startServer = async () => {
