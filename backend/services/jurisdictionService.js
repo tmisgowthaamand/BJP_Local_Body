@@ -1,4 +1,5 @@
 const { getVoterDbClient } = require('../config/db');
+const Admin = require('../models/Admin');
 
 let assemblyCache = null;
 let districtCache = null;

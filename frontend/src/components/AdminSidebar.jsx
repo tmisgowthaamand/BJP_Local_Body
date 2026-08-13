@@ -18,7 +18,10 @@ const AdminSidebar = ({
 
   const getNavItems = () => [
     { id: 'dashboard', label: 'Overview Dashboard', icon: LayoutDashboard },
-    { id: 'applications', label: 'Applications', icon: Users }
+    { id: 'applications', label: 'Candidate Applications', icon: Users },
+    { id: 'organisers', label: 'District Organisers (நிர்வாகிகள்)', icon: ShieldCheck },
+    { id: 'credentials', label: 'Organiser Credentials', icon: KeyRound },
+    { id: 'districts', label: 'District Analytics', icon: Building }
   ];
 
   const navItems = getNavItems();

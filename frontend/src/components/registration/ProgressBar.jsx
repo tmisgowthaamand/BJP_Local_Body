@@ -4,19 +4,20 @@ const STEP_NAMES = [
   'Mobile Number',
   'OTP Verification',
   'BJP Membership ID',
-  'Voter ID Verification',
+  'Voter ID & Photo Upload',
   'Electoral Area',
   'Local Body Details',
   'Position to Contest',
-  'Social Media Profiles',
-  'Work Experience',
-  'Local Area Understanding',
+  'Social Media & Pitch Video',
+  'Work Experience & Gov Profile',
+  'Ward Understanding & Strategy',
+  'Candidate Profile Document',
   'Review & Confirmation',
-  'Application Submission'
+  'Final Submission & Card'
 ];
 
 const ProgressBar = ({ currentStep }) => {
-  const percentage = Math.round((currentStep / 12) * 100);
+  const percentage = Math.round((currentStep / 13) * 100);
   const stepTitle = STEP_NAMES[currentStep - 1] || 'Registration';
 
   return (
@@ -54,7 +55,7 @@ const ProgressBar = ({ currentStep }) => {
         }}
       >
         <span>
-          Step {currentStep} of 12 — {stepTitle}
+          Step {currentStep} of 13 — {stepTitle}
         </span>
         <span style={{ color: '#FF6600', fontWeight: 800 }}>{percentage}%</span>
       </div>

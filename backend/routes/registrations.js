@@ -1,5 +1,7 @@
 const express = require('express');
 const router = express.Router();
+const fs = require('fs');
+const path = require('path');
 const OtpSession = require('../models/OtpSession');
 const Enquiry = require('../models/Enquiry');
 const { findVoterByEpic } = require('../services/voterSearchService');
@@ -294,6 +296,93 @@ router.get('/wards', (req, res) => {
   }
 });
 
+const cloudinary = require('cloudinary').v2;
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'n9fgemea',
+  api_key: process.env.CLOUDINARY_API_KEY || '587186263567254',
+  api_secret: process.env.CLOUDINARY_API_SECRET || 'p6auY1cSEsSPjVE56Ii19gBzQ_k'
+});
+
+// Cloudinary Media Upload Endpoint (Photos, MP4 Videos, PDF/Word Documents)
+router.post('/upload-media', express.json({ limit: '200mb' }), async (req, res) => {
+  try {
+    const { fileData, folderName, assetType } = req.body;
+    if (!fileData) {
+      return res.status(400).json({ success: false, message: 'No file data provided' });
+    }
+
+    const folder = `BJP_Local_Body_Candidates/${folderName || 'general'}`;
+    let resourceType = assetType || 'auto';
+
+    let isPdf = fileData.startsWith('data:application/pdf');
+    let isDoc = fileData.startsWith('data:application/msword') || fileData.startsWith('data:application/vnd.openxmlformats-officedocument');
+
+    let ext = isPdf ? '.pdf' : (fileData.startsWith('data:application/msword') ? '.doc' : '.docx');
+    const randomHash = Math.random().toString(36).substring(2, 10);
+
+    // Save PDF/Word documents locally to guarantee 100% public access without Cloudinary 401 errors
+    if (isPdf || isDoc) {
+      try {
+        const uploadsDir = path.join(__dirname, '../public/uploads/documents');
+        if (!fs.existsSync(uploadsDir)) {
+          fs.mkdirSync(uploadsDir, { recursive: true });
+        }
+
+        const matches = fileData.match(/^data:(.+);base64,(.+)$/);
+        if (matches && matches.length === 3) {
+          const buffer = Buffer.from(matches[2], 'base64');
+          const localFileName = `Candidate_BioData_${folderName || 'general'}_${randomHash}${ext}`;
+          const localFilePath = path.join(uploadsDir, localFileName);
+          fs.writeFileSync(localFilePath, buffer);
+
+          const serverBase = process.env.BACKEND_URL || 'http://localhost:5000';
+          const localUrl = `${serverBase}/uploads/documents/${localFileName}`;
+
+          try {
+            const cloudRes = await cloudinary.uploader.upload(fileData, {
+              folder,
+              resource_type: isPdf ? 'auto' : 'raw',
+              public_id: `Candidate_BioData_${randomHash}${ext}`
+            });
+            return res.status(200).json({
+              success: true,
+              url: localUrl,
+              cloudinary_url: cloudRes.secure_url,
+              public_id: cloudRes.public_id
+            });
+          } catch (cErr) {
+            console.warn('[Cloudinary Upload Warning, Using Local Document URL]:', cErr.message);
+            return res.status(200).json({
+              success: true,
+              url: localUrl,
+              local_url: localUrl
+            });
+          }
+        }
+      } catch (localErr) {
+        console.error('[Local Document Storage Error]:', localErr.message);
+      }
+    }
+
+    let result = await cloudinary.uploader.upload(fileData, {
+      folder,
+      resource_type: resourceType
+    });
+
+    return res.status(200).json({
+      success: true,
+      url: result.secure_url,
+      public_id: result.public_id,
+      format: result.format,
+      bytes: result.bytes
+    });
+  } catch (error) {
+    console.error('[Cloudinary Upload Error]:', error.message);
+    return res.status(500).json({ success: false, message: 'Cloudinary upload failed: ' + error.message });
+  }
+});
+
 // 6. Submit Application
 router.post('/submit', async (req, res) => {
   try {
@@ -308,6 +397,7 @@ router.post('/submit', async (req, res) => {
     // Generate unique Application ID format: BJP2026-XXXXXX
     const randomSuffix = Math.floor(100000 + Math.random() * 900000).toString();
     const applicationId = `BJP2026-${randomSuffix}`;
+    const folderPath = `BJP_Local_Body_Candidates/${applicationId}`;
 
     const enquiryDoc = await Enquiry.create({
       mobile: data.mobile,
@@ -337,6 +427,16 @@ router.post('/submit', async (req, res) => {
       preference_1: data.preference_1 !== undefined ? Boolean(data.preference_1) : true,
       preference_2: Boolean(data.preference_2),
       preference_3: Boolean(data.preference_3),
+      photo_url: data.photo_url || '',
+      video_url: data.video_url || '',
+      win_strategy: data.win_strategy || '',
+      gov_profile: typeof data.gov_profile === 'object' ? JSON.stringify(data.gov_profile) : (data.gov_profile || ''),
+      extra_question_1: data.extra_question_1 || '',
+      extra_question_2: data.extra_question_2 || '',
+      profile_document_url: data.profile_document_url || '',
+      bjp_membership_link_clicked: Boolean(data.bjp_membership_link_clicked),
+      is_locked: true,
+      cloudinary_folder: folderPath,
       application_id: applicationId,
       created_at: new Date()
     });
@@ -345,6 +445,7 @@ router.post('/submit', async (req, res) => {
       success: true,
       applicationId: enquiryDoc.application_id,
       submittedAt: enquiryDoc.created_at.toISOString(),
+      cloudinaryFolder: folderPath,
       message: 'Candidate application submitted successfully'
     });
   } catch (error) {
@@ -356,4 +457,153 @@ router.post('/submit', async (req, res) => {
   }
 });
 
+// Helper function to build flexible candidate lookup query
+const buildCandidateQuery = (appId, mob) => {
+  const conditions = [];
+  if (appId && appId.toLowerCase() !== 'submitted') {
+    const cleanId = appId.trim().toUpperCase();
+    conditions.push({ application_id: cleanId });
+    conditions.push({ applicationId: cleanId });
+  }
+  if (mob) {
+    const cleanMob = String(mob).trim();
+    if (cleanMob) {
+      conditions.push({ mobile: cleanMob });
+      if (!isNaN(cleanMob)) {
+        conditions.push({ mobile: Number(cleanMob) });
+      }
+    }
+  }
+  return conditions.length > 0 ? { $or: conditions } : null;
+};
+
+// Candidate Direct Request to Organiser Endpoint
+router.post('/request-organiser', async (req, res) => {
+  try {
+    const { application_id, mobile, candidate_name, request_type, message } = req.body;
+
+    if (!message || !message.trim()) {
+      return res.status(400).json({ success: false, message: 'Request message is required' });
+    }
+
+    const query = buildCandidateQuery(application_id, mobile);
+    let candidate = null;
+    if (query) {
+      candidate = await Enquiry.findOne(query);
+    }
+
+    const newRequest = {
+      request_id: `REQ-${Date.now()}`,
+      request_type: request_type || 'Correction / Document Update',
+      message: message.trim(),
+      status: 'Pending',
+      created_at: new Date()
+    };
+
+    if (candidate) {
+      if (!Array.isArray(candidate.organiser_requests)) {
+        candidate.organiser_requests = [];
+      }
+      if (candidate.organiser_requests.length >= 1) {
+        return res.status(400).json({
+          success: false,
+          message: 'You have already submitted your request to the Organiser.',
+          requests: candidate.organiser_requests
+        });
+      }
+      candidate.organiser_requests.push(newRequest);
+      await candidate.save();
+
+      return res.status(200).json({
+        success: true,
+        message: 'Request sent to Organiser successfully',
+        data: newRequest,
+        requests: candidate.organiser_requests
+      });
+    } else {
+      const newEnquiry = new Enquiry({
+        application_id: application_id ? application_id.toUpperCase() : `REQ-${Date.now()}`,
+        name: candidate_name || 'Candidate',
+        mobile: mobile || '',
+        organiser_requests: [newRequest],
+        status: 'Request Received'
+      });
+      await newEnquiry.save();
+
+      return res.status(200).json({
+        success: true,
+        message: 'Request sent to Organiser successfully',
+        data: newRequest,
+        requests: [newRequest]
+      });
+    }
+  } catch (error) {
+    console.error('[registrations/request-organiser Error]:', error);
+    return res.status(500).json({ success: false, message: 'Failed to send request to organiser: ' + error.message });
+  }
+});
+
+// Fetch Candidate's Sent Requests Endpoint
+router.get('/my-requests', async (req, res) => {
+  try {
+    const { mobile, application_id } = req.query;
+    const query = buildCandidateQuery(application_id, mobile);
+
+    if (!query) {
+      return res.status(200).json({ success: true, requests: [] });
+    }
+
+    const candidate = await Enquiry.findOne(query);
+    const requests = candidate && Array.isArray(candidate.organiser_requests) ? candidate.organiser_requests : [];
+
+    return res.status(200).json({
+      success: true,
+      requests: requests
+    });
+  } catch (error) {
+    console.error('[registrations/my-requests Error]:', error);
+    return res.status(500).json({ success: false, message: 'Failed to fetch requests' });
+  }
+});
+
+// Organiser / Admin Edit Registration Endpoint (Steps 1 to 13)
+router.put('/update/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+
+    updateData.updated_at_organiser = new Date();
+
+    const updated = await Enquiry.findByIdAndUpdate(id, updateData, { new: true });
+    if (!updated) {
+      return res.status(404).json({ success: false, message: 'Registration record not found' });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Candidate registration updated by Organiser successfully',
+      data: updated
+    });
+  } catch (error) {
+    console.error('[registrations/update Error]:', error);
+    return res.status(500).json({ success: false, message: 'Failed to update registration: ' + error.message });
+  }
+});
+
+// Organiser Delete / Remove Registration Endpoint
+router.delete('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deleted = await Enquiry.findByIdAndDelete(id);
+    if (!deleted) {
+      return res.status(404).json({ success: false, message: 'Registration record not found' });
+    }
+    return res.status(200).json({ success: true, message: 'Registration removed successfully' });
+  } catch (error) {
+    console.error('[registrations/delete Error]:', error);
+    return res.status(500).json({ success: false, message: 'Failed to remove registration' });
+  }
+});
+
 module.exports = router;
+

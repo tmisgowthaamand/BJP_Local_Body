@@ -88,6 +88,43 @@ const Step03_MembershipID = () => {
         </div>
       </div>
 
+      {/* Official BJP Membership Join Link Box */}
+      <div style={{
+        padding: '20px',
+        backgroundColor: '#FFF8F3',
+        borderRadius: '12px',
+        border: '1.5px solid #FF9933',
+        marginBottom: '24px'
+      }}>
+        <div style={{ fontSize: '15px', fontWeight: 800, color: '#E65100', marginBottom: '6px' }}>
+          🪷 Not a BJP Primary Member yet?
+        </div>
+        <p style={{ fontSize: '13px', color: '#555555', margin: '0 0 12px 0', lineHeight: 1.5 }}>
+          If you are not registered as a primary member, you can optionally join online via the official BJP Membership Portal:
+        </p>
+        <a
+          href="https://membership.bjp.org/"
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={() => updateForm({ bjp_membership_link_clicked: true })}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            backgroundColor: '#FF6600',
+            color: '#FFFFFF',
+            padding: '10px 18px',
+            borderRadius: '8px',
+            fontWeight: 800,
+            fontSize: '13.5px',
+            textDecoration: 'none',
+            boxShadow: '0 3px 10px rgba(255, 102, 0, 0.25)'
+          }}
+        >
+          🌐 Join BJP Online (https://membership.bjp.org/) ↗
+        </a>
+      </div>
+
       {error && (
         <div style={{ padding: '12px 16px', backgroundColor: '#FFEBEE', color: '#C62828', borderRadius: '10px', fontSize: '13.5px', marginBottom: '20px', borderLeft: '4px solid #D32F2F', fontWeight: 600 }}>
           ⚠️ {error}

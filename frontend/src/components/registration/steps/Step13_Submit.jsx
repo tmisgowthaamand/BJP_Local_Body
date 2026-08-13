@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useApplication } from '../../../context/ApplicationContext';
 import API from '../../../utils/api';
 
-const Step12_Submit = () => {
+const Step13_Submit = () => {
   const { state, updateForm, resetForm, setStep } = useApplication();
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(Boolean(state.application_id));
@@ -39,7 +39,15 @@ const Step12_Submit = () => {
         polling_station: state.polling_station,
         preference_1: state.preference_1,
         preference_2: state.preference_2,
-        preference_3: state.preference_3
+        preference_3: state.preference_3,
+        photo_url: state.photo_url,
+        video_url: state.video_url,
+        win_strategy: state.win_strategy,
+        gov_profile: state.gov_profile,
+        extra_question_1: state.extra_question_1,
+        extra_question_2: state.extra_question_2,
+        profile_document_url: state.profile_document_url,
+        bjp_membership_link_clicked: state.bjp_membership_link_clicked
       };
 
       const res = await API.post('/registrations/submit', payload);
@@ -67,6 +75,9 @@ const Step12_Submit = () => {
           position: state.position || '',
           body_type: state.body_type || '',
           bjp_membership_id: state.bjp_membership_id || '',
+          photo_url: state.photo_url || '',
+          video_url: state.video_url || '',
+          profile_document_url: state.profile_document_url || '',
           submittedAt: res.data.submittedAt
         }));
         window.dispatchEvent(new Event('candidate_app_submitted'));
@@ -105,7 +116,7 @@ const Step12_Submit = () => {
           letterSpacing: '1px',
           marginBottom: '6px'
         }}>
-          09 FINAL APPLICATION SUBMISSION
+          STEP 13 — FINAL APPLICATION SUBMISSION & CARD
         </div>
       </div>
 
@@ -156,23 +167,33 @@ const Step12_Submit = () => {
           marginBottom: '28px',
           boxShadow: '0 4px 16px rgba(255, 102, 0, 0.08)'
         }}>
-          <div style={{ fontSize: '16px', fontWeight: 800, color: '#FF6600', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span>🌟</span> Official Receipt Confirmation
+          {/* Candidate Photo + ID Header */}
+          <div style={{ display: 'flex', gap: '16px', alignItems: 'center', marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid #FFE0B2' }}>
+            {state.photo_url ? (
+              <img
+                src={state.photo_url}
+                alt="Candidate"
+                style={{ width: '70px', height: '90px', borderRadius: '10px', objectFit: 'cover', objectPosition: 'top center', border: '2px solid #FF6600' }}
+              />
+            ) : (
+              <div style={{ width: '70px', height: '70px', borderRadius: '12px', backgroundColor: '#FFF3E0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '32px' }}>
+                🪷
+              </div>
+            )}
+            <div>
+              <div style={{ fontSize: '12px', fontWeight: 800, color: '#FF6600', textTransform: 'uppercase' }}>
+                OFFICIAL CANDIDATE REGISTRATION CARD
+              </div>
+              <div style={{ fontSize: '18px', fontWeight: 800, color: '#1A1A1A' }}>
+                {state.full_name || 'Candidate'}
+              </div>
+              <div style={{ fontSize: '13px', color: '#2E7D32', fontWeight: 700 }}>
+                ID: {state.application_id || 'BJP-APP-SUCCESS'}
+              </div>
+            </div>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '14px', color: '#1A1A1A' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '8px', borderBottom: '1px solid #FFE0B2' }}>
-              <span style={{ color: '#666666', fontWeight: 500 }}>Application ID:</span>
-              <span style={{ color: '#FF6600', fontWeight: 800, fontSize: '16px', letterSpacing: '0.5px' }}>
-                {state.application_id || 'BJP-APP-SUCCESS'}
-              </span>
-            </div>
-
-            <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '8px', borderBottom: '1px solid #FFE0B2' }}>
-              <span style={{ color: '#666666', fontWeight: 500 }}>Candidate Name:</span>
-              <span style={{ fontWeight: 700 }}>{state.full_name || 'Candidate'}</span>
-            </div>
-
             <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '8px', borderBottom: '1px solid #FFE0B2' }}>
               <span style={{ color: '#666666', fontWeight: 500 }}>Mobile Number:</span>
               <span style={{ fontWeight: 700 }}>+91 {state.mobile}</span>
@@ -183,12 +204,31 @@ const Step12_Submit = () => {
               <span style={{ fontWeight: 700 }}>{state.district} ({state.assembly_name || 'Assembly'})</span>
             </div>
 
+            <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '8px', borderBottom: '1px solid #FFE0B2' }}>
+              <span style={{ color: '#666666', fontWeight: 500 }}>Contest Position:</span>
+              <span style={{ fontWeight: 700 }}>{state.position || 'Ward Councillor'}</span>
+            </div>
+
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <span style={{ color: '#666666', fontWeight: 500 }}>Submission Timestamp:</span>
               <span style={{ fontWeight: 700 }}>
                 {state.submitted_at ? new Date(state.submitted_at).toLocaleString('en-IN') : new Date().toLocaleString('en-IN')}
               </span>
             </div>
+          </div>
+
+          {/* District Organiser Lock Notice (★ Item 9) */}
+          <div style={{
+            marginTop: '20px',
+            padding: '16px',
+            backgroundColor: '#E8F5E9',
+            borderRadius: '10px',
+            borderLeft: '4px solid #1B5E20',
+            fontSize: '13px',
+            color: '#1B5E20',
+            lineHeight: '1.5'
+          }}>
+            🔒 <strong>Application Locked:</strong> If you wish to make any corrections, replace photos/documents, or edit your submission, please get in touch with your <strong>Organiser</strong>.
           </div>
         </div>
       ) : (
@@ -203,7 +243,7 @@ const Step12_Submit = () => {
             <span>🔒</span> Verified Official Declaration
           </div>
           <p style={{ fontSize: '13.5px', color: '#555555', margin: 0, lineHeight: 1.5, fontWeight: 500 }}>
-            By submitting this application, you certify that all entered membership, voter roll, and local body details are true and accurate according to official records.
+            By submitting this application, you certify that all entered membership, voter roll, photo, and local body details are true and accurate according to official records.
           </p>
         </div>
       )}
@@ -242,7 +282,7 @@ const Step12_Submit = () => {
         <div style={{ display: 'flex', gap: '16px', marginTop: '12px' }}>
           <button
             type="button"
-            onClick={() => setStep(11)}
+            onClick={() => setStep(12)}
             style={{
               height: '52px',
               padding: '0 24px',
@@ -284,4 +324,4 @@ const Step12_Submit = () => {
   );
 };
 
-export default Step12_Submit;
+export default Step13_Submit;

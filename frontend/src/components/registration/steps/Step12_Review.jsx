@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useApplication } from '../../../context/ApplicationContext';
 import StepNav from '../StepNav';
 
-const Step11_Review = () => {
+const Step12_Review = () => {
   const { state, setStep } = useApplication();
   const [expandedSection, setExpandedSection] = useState(0); // Default open first section
 
@@ -31,10 +31,11 @@ const Step11_Review = () => {
       ]
     },
     {
-      title: '3. Voter & Electoral Area',
+      title: '3. Voter & Candidate Photo',
       stepNum: 4,
       items: [
         { label: 'Voter EPIC Card', value: state.voter_epic || 'Verified' },
+        { label: 'Candidate Photo', value: state.photo_url ? 'Uploaded (Cloudinary)' : 'Not Uploaded' },
         { label: 'District', value: state.district || 'N/A' },
         { label: 'Assembly Constituency', value: state.assembly_name || (state.assembly_no ? `Assembly #${state.assembly_no}` : 'N/A') }
       ]
@@ -50,9 +51,10 @@ const Step11_Review = () => {
       ]
     },
     {
-      title: '5. Social Media Profiles',
+      title: '5. Social Media & Pitch Video',
       stepNum: 8,
       items: [
+        { label: 'Pitch Video', value: state.video_url ? 'Uploaded (MP4 / Link)' : 'N/A' },
         { label: 'Facebook', value: state.facebook_url || 'N/A' },
         { label: 'Instagram', value: state.instagram_url || 'N/A' },
         { label: 'Twitter / X', value: state.twitter_url || 'N/A' },
@@ -60,11 +62,12 @@ const Step11_Review = () => {
       ]
     },
     {
-      title: '6. Work & Local Vision',
+      title: '6. Work, Vision & Documents',
       stepNum: 9,
       items: [
-        { label: 'Work Experience', value: state.work_experience ? `${state.work_experience.slice(0, 120)}${state.work_experience.length > 120 ? '...' : ''}` : 'Provided' },
-        { label: 'Local Understanding', value: state.local_understanding ? `${state.local_understanding.slice(0, 120)}${state.local_understanding.length > 120 ? '...' : ''}` : 'Provided' }
+        { label: 'Work Experience', value: state.work_experience ? `${state.work_experience.slice(0, 80)}...` : 'Provided' },
+        { label: 'Ward Strategy', value: state.win_strategy ? `${state.win_strategy.slice(0, 80)}...` : 'Provided' },
+        { label: 'Profile Document', value: state.profile_document_url ? 'Uploaded (PDF / Word)' : 'Not Uploaded' }
       ]
     }
   ];
@@ -82,7 +85,7 @@ const Step11_Review = () => {
           letterSpacing: '1px',
           marginBottom: '4px'
         }}>
-          08 APPLICATION REVIEW
+          STEP 12 — APPLICATION REVIEW
         </div>
       </div>
 
@@ -248,9 +251,21 @@ const Step11_Review = () => {
         })}
       </div>
 
-      <StepNav nextText="Proceed to Submit →" />
+      {/* Prominent Bottom Action Bar */}
+      <div style={{
+        marginTop: '24px',
+        paddingTop: '16px',
+        borderTop: '2px dashed #FFE0B2',
+        position: 'sticky',
+        bottom: 0,
+        backgroundColor: '#FFFFFF',
+        paddingBottom: '8px',
+        zIndex: 10
+      }}>
+        <StepNav nextText="Proceed to Final Submit 🚀" />
+      </div>
     </div>
   );
 };
 
-export default Step11_Review;
+export default Step12_Review;

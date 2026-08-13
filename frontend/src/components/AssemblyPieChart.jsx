@@ -11,7 +11,7 @@ const BJP_COLORS = [
 ];
 
 /**
- * AssemblyPieChart — Visual Donut Pie Chart showing which Assembly Registrations are fastest with BJP Color Palette
+ * AssemblyPieChart — Visual Donut Pie Chart showing real Assembly Registration distribution with BJP Color Palette
  */
 const AssemblyPieChart = ({ voters = [] }) => {
   const [hoveredIdx, setHoveredIdx] = useState(null);
@@ -30,33 +30,28 @@ const AssemblyPieChart = ({ voters = [] }) => {
     let totalLeads = voters.length || 0;
 
     voters.forEach((v) => {
-      const assName = String(v.assemblyName || v.union_or_municipality || '').trim();
+      const assName = String(v.assemblyName || v.unionOrMunicipality || v.union_or_municipality || '').trim();
       if (assName && assemblyCounts[assName] !== undefined) {
         assemblyCounts[assName] += 1;
       } else if (assName) {
-        // Match partial
         const matched = Object.keys(assemblyCounts).find(k => k.toLowerCase().includes(assName.toLowerCase()) || assName.toLowerCase().includes(k.toLowerCase()));
         if (matched) assemblyCounts[matched] += 1;
-        else assemblyCounts['Gummidipoondi'] += 1;
-      } else {
-        assemblyCounts['Gummidipoondi'] += 1;
+        else {
+          // Add dynamic assembly if not in default 5
+          assemblyCounts[assName] = (assemblyCounts[assName] || 0) + 1;
+        }
       }
     });
 
-    // Default sample fallback if no dynamic leads yet so chart always renders cleanly
-    if (totalLeads === 0) {
-      assemblyCounts['Gummidipoondi'] = 1;
-      assemblyCounts['Ponneri'] = 1;
-      totalLeads = 2;
-    }
-
-    const assembliesList = [
-      { name: 'Gummidipoondi', count: assemblyCounts['Gummidipoondi'] || 1, speed: 'Fastest (14.2 reg/hr)', status: 'Active Lead' },
-      { name: 'Ponneri', count: assemblyCounts['Ponneri'] || 1, speed: 'Fast (11.8 reg/hr)', status: 'Active Lead' },
-      { name: 'Tiruttani', count: assemblyCounts['Tiruttani'] || 0, speed: 'Medium (6.4 reg/hr)', status: 'In Progress' },
-      { name: 'Thiruvallur', count: assemblyCounts['Thiruvallur'] || 0, speed: 'Medium (5.1 reg/hr)', status: 'In Progress' },
-      { name: 'Poonamallee', count: assemblyCounts['Poonamallee'] || 0, speed: 'Normal (3.9 reg/hr)', status: 'In Progress' }
-    ];
+    const assembliesList = Object.keys(assemblyCounts).map((name) => {
+      const count = assemblyCounts[name] || 0;
+      return {
+        name,
+        count,
+        speed: count > 0 ? `⚡ ${count} Live Registration${count > 1 ? 's' : ''}` : '💤 No Registrations Yet',
+        status: count > 0 ? 'Active Candidate Lead' : 'No Leads'
+      };
+    });
 
     const totalVal = assembliesList.reduce((sum, a) => sum + a.count, 0);
 
@@ -116,16 +111,16 @@ const AssemblyPieChart = ({ voters = [] }) => {
               <Zap size={18} />
             </span>
             <h3 style={{ fontSize: '18px', fontWeight: '800', color: '#0f172a', margin: 0 }}>
-              Assembly Wise Candidate Registration Speed
+              Assembly Wise Candidate Registration Distribution
             </h3>
           </div>
           <p style={{ fontSize: '13px', color: '#64748b', margin: '4px 0 0 32px' }}>
-            Live performance &amp; registration throughput across Thiruvallur Assembly Constituencies (BJP Colors)
+            Real-time candidate registration distribution across Assembly Constituencies
           </p>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#f8fafc', padding: '6px 12px', borderRadius: '20px', border: '1px solid #e2e8f0', fontSize: '12px', fontWeight: '700', color: '#16a34a' }}>
-          <TrendingUp size={14} /> Fast Registration Velocity
+          <TrendingUp size={14} /> Real-Time Analytics
         </div>
       </div>
 
@@ -167,7 +162,7 @@ const AssemblyPieChart = ({ voters = [] }) => {
               {activeSlice ? `${activeSlice.percentage}%` : `${chartData.total}`}
             </text>
             <text x="125" y="156" textAnchor="middle" fill="#FF6600" fontSize="10" fontWeight="700">
-              {activeSlice ? activeSlice.name : 'Thiruvallur'}
+              {activeSlice ? activeSlice.name : 'Registrations'}
             </text>
           </svg>
         </div>
@@ -184,7 +179,7 @@ const AssemblyPieChart = ({ voters = [] }) => {
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  justify: 'space-between',
+                  justifyContent: 'space-between',
                   padding: '12px 16px',
                   borderRadius: '12px',
                   background: isHovered ? '#fff7ed' : '#f8fafc',

@@ -1,37 +1,38 @@
 const mongoose = require('mongoose');
 const { MongoClient } = require('mongodb');
 
-// App Write Database Connection (Mongoose)
+// DB2: READ & WRITE DATABASE (Mongoose Client for candidate registrations & organiser updates)
 const connectAppDb = async () => {
-  const mongoUrl = process.env.MONGO_APP_URL || 'mongodb://127.0.0.1:27017/bjp_nalam_thittam_db';
+  const mongoUrl = process.env.MONGO_APP_URL;
+  const dbName = process.env.MONGO_APP_DB_NAME || 'election_app';
+
   try {
-    const dbName = process.env.MONGO_APP_DB_NAME || 'election_app';
     const conn = await mongoose.connect(mongoUrl, {
       dbName,
       serverSelectionTimeoutMS: 5000
     });
-    console.log(`[App DB] Connected successfully to Mongoose: ${conn.connection.host}`);
+    console.log(`[DB2 App Read-Write DB] Connected successfully to Cloud Mongoose: ${conn.connection.host}`);
     return conn;
   } catch (error) {
-    console.error(`[App DB Connection Error]: Could not connect to MongoDB at ${mongoUrl}: ${error.message}`);
+    console.error(`[DB2 App Connection Error]: Could not connect to Cloud MongoDB at ${mongoUrl}: ${error.message}`);
     if (process.env.NODE_ENV === 'production') {
       process.exit(1);
     }
   }
 };
 
-// Voter Read-Only Database Client (Native MongoDB Client for fast cross-collection queries)
+// DB1: READ-ONLY DATABASE (Native MongoClient for searching 13.72 Lakh voter roll records across 5 assemblies)
 let voterClient = null;
 
 const getVoterDbClient = async () => {
   if (!voterClient) {
-    const voterUrl = process.env.MONGO_VOTER_URL || process.env.MONGO_APP_URL || 'mongodb://127.0.0.1:27017/voter_db';
+    const voterUrl = process.env.MONGO_VOTER_URL || process.env.MONGO_APP_URL;
     try {
-      voterClient = new MongoClient(voterUrl);
+      voterClient = new MongoClient(voterUrl, { serverSelectionTimeoutMS: 5000 });
       await voterClient.connect();
-      console.log('[Voter DB] Native MongoClient connected');
+      console.log('[DB1 Voter Read-Only DB] Native MongoClient connected to Cloud MongoDB');
     } catch (error) {
-      console.error(`[Voter DB Connection Error]: Could not connect at ${voterUrl}: ${error.message}`);
+      console.error(`[Voter DB Connection Error]: Could not connect to Cloud Voter DB at ${voterUrl}: ${error.message}`);
       return null;
     }
   }
@@ -42,4 +43,5 @@ module.exports = {
   connectAppDb,
   getVoterDbClient
 };
+
 

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import QRCode from 'qrcode'
 import { useNavigate } from 'react-router-dom'
 import { chat } from '../api'
+import API from '../utils/api'
 import '../styles/chatbot.css'
 import { useLang } from '../i18n/LanguageContext'
 import { getSchemeBgImage } from '../components/MemberProfileTimelineView'
@@ -197,7 +198,7 @@ const getActiveStep = (chatState) => {
   }
 }
 
-const FINAL_BANNER_URL = 'https://res.cloudinary.com/dkjrdntf/image/upload/f_webp,q_auto:good,w_480/v1785563946/bjp_schemes/bjp_final_banner.png';
+const FINAL_BANNER_URL = 'https://res.cloudinary.com/n9fgemea/image/upload/v1786619554/BJP_Local_Body_Banners/chatbot_header_banner_1786619550207.png';
 
 // Instant memory preload for zero-delay rendering
 if (typeof window !== 'undefined') {
@@ -3344,6 +3345,7 @@ export default function ChatbotPage() {
       delete window.handlePDFGenerated;
     };
   }, [])
+  const isMobile = useIsMobile()
   const [chatState, setChatState]   = useState(S.WELCOME)
   const [messages, setMessages]     = useState([])
   const [inputValue, setInputValue] = useState('')
@@ -3358,6 +3360,74 @@ export default function ChatbotPage() {
   const [submittedAppId, setSubmittedAppId] = useState(() => {
     return localStorage.getItem('bjp_candidate_app_id') || (localStorage.getItem('bjp_candidate_app_details') ? 'submitted' : '')
   })
+  const [showOrganiserModal, setShowOrganiserModal] = useState(false)
+  const [organiserReqType, setOrganiserReqType] = useState('Correction / Document Update')
+  const [organiserReqMsg, setOrganiserReqMsg] = useState('')
+  const [sendingOrganiserReq, setSendingOrganiserReq] = useState(false)
+  const [organiserReqSuccess, setOrganiserReqSuccess] = useState('')
+  const [myOrganiserRequests, setMyOrganiserRequests] = useState([])
+
+  const getCandidateDetails = useCallback(() => {
+    let details = {};
+    try { details = JSON.parse(localStorage.getItem('bjp_candidate_app_details') || '{}'); } catch {}
+    const appId = details.applicationId || details.application_id || localStorage.getItem('bjp_candidate_app_id') || submittedAppId || '';
+    const mobile = details.mobile || mobileRef.current || cardRef.current?.mobile || profileRef.current?.mobile || localStorage.getItem('bjp_user_mobile') || localStorage.getItem('bjp_candidate_mobile') || '';
+    const name = details.name || profileRef.current?.voterName || cardRef.current?.voter_name || 'Candidate';
+    return { appId, mobile, name };
+  }, [submittedAppId]);
+
+  const fetchMyRequests = useCallback(async () => {
+    try {
+      const { appId, mobile } = getCandidateDetails();
+      if (!appId && !mobile) return;
+      const res = await API.get(`/registrations/my-requests?mobile=${encodeURIComponent(mobile)}&application_id=${encodeURIComponent(appId)}`);
+      if (res.data?.success && Array.isArray(res.data.requests)) {
+        setMyOrganiserRequests(res.data.requests);
+      }
+    } catch (err) {
+      console.error('Failed to fetch requests:', err);
+    }
+  }, [getCandidateDetails]);
+
+  useEffect(() => {
+    if (showOrganiserModal) {
+      fetchMyRequests();
+    }
+  }, [showOrganiserModal, fetchMyRequests]);
+
+  const handleSendOrganiserRequest = async () => {
+    if (!organiserReqMsg.trim()) return;
+    setSendingOrganiserReq(true);
+    try {
+      const { appId, mobile, name } = getCandidateDetails();
+
+      const res = await API.post('/registrations/request-organiser', {
+        application_id: appId,
+        mobile: mobile,
+        candidate_name: name,
+        request_type: organiserReqType,
+        message: organiserReqMsg
+      });
+
+      setSendingOrganiserReq(false);
+      if (res.data?.success) {
+        setOrganiserReqSuccess('✅ Request message submitted successfully to District Organiser!');
+        setOrganiserReqMsg('');
+        if (Array.isArray(res.data.requests)) {
+          setMyOrganiserRequests(res.data.requests);
+        } else if (res.data.data) {
+          setMyOrganiserRequests((prev) => [res.data.data, ...prev]);
+        }
+        setTimeout(() => setOrganiserReqSuccess(''), 5000);
+      }
+    } catch (err) {
+      setSendingOrganiserReq(false);
+      if (err.response?.data?.requests) {
+        setMyOrganiserRequests(err.response.data.requests);
+      }
+      alert('Failed to send request: ' + (err.response?.data?.message || err.message));
+    }
+  };
 
   // ── Message helpers ───────────────────────────────────────
   const addMsg = useCallback((from, type, payload = {}) => {
@@ -3400,7 +3470,7 @@ export default function ChatbotPage() {
       const mobile = details.mobile || ''
       const finalId = (details.applicationId || appId || 'BJP2026-SUBMITTED').toUpperCase();
 
-      const msgText = t('🎉 *Candidate Registration Submitted Successfully!*\n\nPhone number *{mobile}* verified for candidate *{name}* (ID: *{appId}*).\n\n🔓 "My Profile" and "My Application" are now unlocked in the sidebar.', { name, mobile, appId: finalId });
+      const msgText = t('🎉 *Candidate Registration Submitted Successfully!*\n\nPhone number *{mobile}* verified for candidate *{name}* (ID: *{appId}*).\n\n🔓 "My Profile" and "My Application" are now unlocked in the sidebar.\n\n🔒 *Note:* Your application details are locked. If you wish to make any corrections, replace photos/documents, or edit your submission, please get in touch with your *Organiser*.', { name, mobile, appId: finalId });
 
       setMessages([
         {
@@ -3422,7 +3492,7 @@ export default function ChatbotPage() {
       setChatState(S.DONE)
       setActiveView('chat')
 
-      const msgText = t('👋 *Welcome Back {name}!*\n\nPhone number *{mobile}* verified for candidate *{name}* (ID: *{appId}*).\n\n🔓 "My Profile" and "My Application" are now unlocked in the sidebar.', { name, mobile, appId });
+      const msgText = t('👋 *Welcome Back {name}!*\n\nPhone number *{mobile}* verified for candidate *{name}* (ID: *{appId}*).\n\n🔓 "My Profile" and "My Application" are now unlocked in the sidebar.\n\n🔒 *Note:* Your application details are locked. If you wish to make any corrections, replace photos/documents, or edit your submission, please get in touch with your *Organiser*.', { name, mobile, appId });
 
       setMessages([
         {
@@ -4086,6 +4156,10 @@ export default function ChatbotPage() {
       setActiveView('my_application')
       return
     }
+    if (action === 'contact_organiser') {
+      setShowOrganiserModal(true)
+      return
+    }
     setActiveView('chat')
     const bjpCode = cardRef.current?.bjp_code || cardRef.current?.ptc_code || profileRef.current?.bjp_code || profileRef.current?.ptc_code
 
@@ -4408,8 +4482,9 @@ export default function ChatbotPage() {
             </div>
 
             {[
-              { icon: 'person-circle', label: 'My Profile',     action: 'profile',        desc: 'View your registration details' },
-              { icon: 'journal-text',  label: 'My Application', action: 'my_application', desc: 'View submitted candidate application' },
+              { icon: 'person-circle',          label: 'My Profile',        action: 'profile',           desc: 'View your registration details' },
+              { icon: 'journal-text',           label: 'My Application',    action: 'my_application',    desc: 'View submitted candidate application' },
+              { icon: 'telephone-outbound-fill',label: 'Organiser',         action: 'contact_organiser', desc: 'Call or text organiser' },
             ].map((item) => {
               const isUnlocked = Boolean(
                 isDone ||
@@ -4720,17 +4795,17 @@ export default function ChatbotPage() {
             </div>
             <nav className="sidebar-nav">
               {[
-                { icon: 'person-circle',       label: 'My Profile',              action: 'profile' },
-                { icon: 'journal-text',        label: 'My Application',          action: 'my_application' },
+                { icon: 'person-circle',          label: 'My Profile',        action: 'profile' },
+                { icon: 'journal-text',           label: 'My Application',    action: 'my_application' },
+                { icon: 'telephone-outbound-fill',label: 'Organiser',         action: 'contact_organiser' },
               ].map((item) => {
-                const isProfileOrApp = item.action === 'profile' || item.action === 'my_application';
                 const isUnlocked = Boolean(
                   isDone ||
                   submittedAppId ||
                   (cardRef.current && (cardRef.current.voter_name || cardRef.current.epic_no)) ||
                   (profileRef.current && (profileRef.current.voterName || profileRef.current.name))
                 );
-                const locked = isProfileOrApp && !isUnlocked;
+                const locked = !isUnlocked;
                 return (
                   <button
                     key={item.action}
@@ -4752,6 +4827,270 @@ export default function ChatbotPage() {
             <div className="sidebar-footer">
               <button className="sidebar-logout-btn" onClick={handleLogout}>
                 <i className="bi bi-box-arrow-left" /> {t('Logout')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* District & Ward Election Organiser Contact Popup Modal */}
+      {showOrganiserModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          backgroundColor: 'rgba(0, 0, 0, 0.65)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 99999,
+          padding: isMobile ? '10px' : '16px',
+          backdropFilter: 'blur(4px)',
+          boxSizing: 'border-box'
+        }}>
+          <div style={{
+            backgroundColor: '#FFFFFF',
+            borderRadius: isMobile ? '14px' : '18px',
+            maxWidth: '460px',
+            width: '100%',
+            maxHeight: isMobile ? '92vh' : '88vh',
+            display: 'flex',
+            flexDirection: 'column',
+            boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+            border: '2px solid #FF6600',
+            overflow: 'hidden',
+            boxSizing: 'border-box'
+          }}>
+            {/* Modal Header */}
+            <div style={{
+              backgroundColor: '#FF6600',
+              color: '#FFFFFF',
+              padding: isMobile ? '14px 16px' : '18px 22px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexShrink: 0
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: isMobile ? '20px' : '24px' }}>📞</span>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: isMobile ? '15px' : '16px', fontWeight: 800 }}>
+                    ORGANISER
+                  </h3>
+                  <span style={{ fontSize: isMobile ? '10.5px' : '11px', opacity: 0.9, fontWeight: 600 }}>
+                    Call or text organiser
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowOrganiserModal(false)}
+                style={{
+                  backgroundColor: 'rgba(255,255,255,0.2)',
+                  border: 'none',
+                  color: '#FFFFFF',
+                  width: '28px',
+                  height: '28px',
+                  borderRadius: '50%',
+                  fontSize: '15px',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Modal Body (Touch & Webkit Scrollable) */}
+            <div style={{
+              padding: isMobile ? '14px' : '20px 22px',
+              overflowY: 'auto',
+              flex: 1,
+              WebkitOverflowScrolling: 'touch',
+              scrollbarWidth: 'thin',
+              scrollbarColor: '#FF6600 #FFF3E0'
+            }}>
+              <div style={{
+                backgroundColor: '#FFF8F3',
+                borderRadius: '12px',
+                padding: isMobile ? '12px 14px' : '16px',
+                border: '1px solid #FFE0B2',
+                marginBottom: isMobile ? '12px' : '16px'
+              }}>
+                <div style={{ fontSize: isMobile ? '14px' : '15px', fontWeight: 800, color: '#E65100', marginBottom: '6px' }}>
+                  Organiser Get In Touch
+                </div>
+                <div style={{ fontSize: isMobile ? '13px' : '14px', color: '#166534', fontWeight: 800, marginBottom: '4px', backgroundColor: '#DCFCE7', padding: '6px 12px', borderRadius: '8px', display: 'inline-block', border: '1px solid #BBF7D0' }}>
+                  📞 Direct Phone: +91 98765 43210
+                </div>
+                <div style={{ fontSize: '11.5px', color: '#666666', fontWeight: 500, marginTop: '4px' }}>
+                  Available Mon – Sun: 9:00 AM – 9:00 PM
+                </div>
+              </div>
+
+              {/* Direct Request Message Form to Organiser (Allowed 1 Time per Candidate) */}
+              {myOrganiserRequests.length >= 1 ? (
+                <div style={{
+                  backgroundColor: '#F0FDF4',
+                  padding: isMobile ? '14px' : '16px',
+                  borderRadius: '12px',
+                  border: '1.5px solid #86EFAC'
+                }}>
+                  <div style={{ fontSize: isMobile ? '13px' : '14px', fontWeight: 800, color: '#166534', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span>✅ Request Submitted to Organiser</span>
+                  </div>
+                  <p style={{ fontSize: '12px', color: '#15803D', margin: '0 0 14px 0', fontWeight: 500, lineHeight: 1.4 }}>
+                    You have submitted your request to the District Organiser. Our team will review your message and get in touch with you.
+                  </p>
+
+                  <div style={{ fontSize: '11px', fontWeight: 800, color: '#E65100', textTransform: 'uppercase', marginBottom: '8px' }}>
+                    📋 YOUR SENT REQUEST DETAILS
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    {myOrganiserRequests.map((req, idx) => (
+                      <div key={idx} style={{ backgroundColor: '#FFFFFF', padding: '12px', borderRadius: '10px', border: '1px solid #BBF7D0', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px', flexWrap: 'wrap', gap: '4px' }}>
+                          <span style={{ fontSize: '12px', fontWeight: 800, color: '#FF6600', textTransform: 'uppercase' }}>
+                            📌 {req.request_type || 'General Request'}
+                          </span>
+                          <span style={{ fontSize: '11px', color: '#64748B', fontWeight: 700 }}>
+                            📅 {req.created_at ? new Date(req.created_at).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }) : 'Recently'}
+                          </span>
+                        </div>
+                        <div style={{ fontSize: '13px', color: '#1E293B', fontWeight: 600, backgroundColor: '#F8FAFC', padding: '10px', borderRadius: '8px', border: '1px solid #E2E8F0', lineHeight: 1.45 }}>
+                          "{req.message}"
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div style={{
+                  backgroundColor: '#FAFAFA',
+                  padding: isMobile ? '12px 14px' : '16px',
+                  borderRadius: '12px',
+                  border: '1.5px solid #E2E8F0'
+                }}>
+                  <div style={{ fontSize: isMobile ? '12.5px' : '13px', fontWeight: 800, color: '#FF6600', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span>📨 Send Direct Request to Organiser</span>
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#64748B', fontWeight: 600, marginBottom: '10px' }}>
+                    💡 Note: Candidates can send 1 request message to the Organiser.
+                  </div>
+
+                  {organiserReqSuccess && (
+                    <div style={{
+                      backgroundColor: '#DCFCE7',
+                      color: '#166534',
+                      padding: '8px 10px',
+                      borderRadius: '8px',
+                      fontSize: '11.5px',
+                      fontWeight: 700,
+                      marginBottom: '10px',
+                      border: '1px solid #BBF7D0'
+                    }}>
+                      {organiserReqSuccess}
+                    </div>
+                  )}
+
+                  <div style={{ marginBottom: '10px' }}>
+                    <label style={{ fontSize: '11px', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '4px' }}>
+                      Select Request Type:
+                    </label>
+                    <select
+                      value={organiserReqType}
+                      onChange={(e) => setOrganiserReqType(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '8px 10px',
+                        borderRadius: '8px',
+                        border: '1px solid #CBD5E1',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        color: '#1E293B',
+                        outline: 'none',
+                        backgroundColor: '#FFFFFF',
+                        boxSizing: 'border-box'
+                      }}
+                    >
+                      <option value="Correction / Document Update">📝 Correction / Document Update</option>
+                      <option value="Photo / BioData Replacement">🖼️ Photo / BioData Replacement</option>
+                      <option value="Ward Strategy Query">🎯 Ward Strategy / Campaign Query</option>
+                      <option value="Other Assistance Request">❓ Other Assistance Request</option>
+                    </select>
+                  </div>
+
+                  <div style={{ marginBottom: '12px' }}>
+                    <label style={{ fontSize: '11px', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '4px' }}>
+                      Type Your Request Message:
+                    </label>
+                    <textarea
+                      rows={isMobile ? 2 : 3}
+                      value={organiserReqMsg}
+                      onChange={(e) => setOrganiserReqMsg(e.target.value)}
+                      placeholder="Type details of what you need corrected or updated in your application..."
+                      style={{
+                        width: '100%',
+                        padding: '8px 10px',
+                        borderRadius: '8px',
+                        border: '1px solid #CBD5E1',
+                        fontSize: '12px',
+                        fontWeight: 500,
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                        backgroundColor: '#FFFFFF',
+                        resize: 'vertical'
+                      }}
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleSendOrganiserRequest}
+                    disabled={sendingOrganiserReq || !organiserReqMsg.trim()}
+                    style={{
+                      width: '100%',
+                      backgroundColor: sendingOrganiserReq || !organiserReqMsg.trim() ? '#94A3B8' : '#FF6600',
+                      color: '#FFFFFF',
+                      border: 'none',
+                      borderRadius: '8px',
+                      padding: isMobile ? '10px' : '10px',
+                      fontWeight: 800,
+                      fontSize: isMobile ? '12.5px' : '13px',
+                      cursor: sendingOrganiserReq || !organiserReqMsg.trim() ? 'not-allowed' : 'pointer',
+                      boxShadow: sendingOrganiserReq || !organiserReqMsg.trim() ? 'none' : '0 3px 10px rgba(255,102,0,0.3)'
+                    }}
+                  >
+                    {sendingOrganiserReq ? '⏳ Sending Request...' : '📨 Send Request to Organiser'}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div style={{ backgroundColor: '#F8FAFC', padding: isMobile ? '10px 16px' : '12px 22px', borderTop: '1px solid #E2E8F0', textAlign: 'right', flexShrink: 0 }}>
+              <button
+                type="button"
+                onClick={() => setShowOrganiserModal(false)}
+                style={{
+                  backgroundColor: '#E2E8F0',
+                  color: '#334155',
+                  border: 'none',
+                  borderRadius: '6px',
+                  padding: isMobile ? '8px 20px' : '6px 16px',
+                  width: isMobile ? '100%' : 'auto',
+                  fontSize: '12.5px',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                Close
               </button>
             </div>
           </div>

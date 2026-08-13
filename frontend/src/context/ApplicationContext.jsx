@@ -30,6 +30,14 @@ const initialState = {
   youtube_url: '',
   work_experience: '',
   local_understanding: '',
+  photo_url: '',
+  video_url: '',
+  win_strategy: '',
+  gov_profile: '',
+  extra_question_1: '',
+  extra_question_2: '',
+  profile_document_url: '',
+  bjp_membership_link_clicked: false,
   application_id: '',
   submitted_at: ''
 };
@@ -37,9 +45,9 @@ const initialState = {
 function applicationReducer(state, action) {
   switch (action.type) {
     case 'SET_STEP':
-      return { ...state, step: Math.min(Math.max(action.payload, 1), 12) };
+      return { ...state, step: Math.min(Math.max(action.payload, 1), 13) };
     case 'NEXT_STEP':
-      return { ...state, step: Math.min(state.step + 1, 12) };
+      return { ...state, step: Math.min(state.step + 1, 13) };
     case 'PREV_STEP':
       return { ...state, step: Math.max(state.step - 1, 1) };
     case 'UPDATE_FORM':

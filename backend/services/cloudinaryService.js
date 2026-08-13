@@ -49,7 +49,12 @@ const uploadDataUri = async (dataUri, { folder = 'bjp_flow', publicId } = {}) =>
 const deleteImage = async (publicId) => {
   if (!publicId) return;
   try {
-    await cloudinary.uploader.destroy(publicId);
+    // Attempt deletion across all resource types (image, raw, video) for complete purge
+    await Promise.allSettled([
+      cloudinary.uploader.destroy(publicId, { resource_type: 'image' }),
+      cloudinary.uploader.destroy(publicId, { resource_type: 'raw' }),
+      cloudinary.uploader.destroy(publicId, { resource_type: 'video' })
+    ]);
   } catch (err) {
     console.error('[Cloudinary delete error]:', err && err.message ? err.message : err);
   }

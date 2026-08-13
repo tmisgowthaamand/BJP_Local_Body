@@ -6,7 +6,7 @@ import MemberProfileTimelineView, { formatSchemeName, formatAppliedDateTime, get
 import ReportsView from '../../components/ReportsView';
 import { useBjpSchemes, buildSchemeCards } from '../../utils/schemesData';
 import {
-  Shield, Users, Building, PhoneCall, RefreshCw, PlusCircle, Search, LogIn, Eye, Award, Share2, ChevronRight, FileText, CheckCircle2, AlertCircle
+  Shield, ShieldCheck, Users, Building, PhoneCall, RefreshCw, PlusCircle, Search, LogIn, Eye, Award, Share2, ChevronRight, FileText, CheckCircle2, AlertCircle
 } from 'lucide-react';
 import TopReferrersCard from '../../components/TopReferrersCard';
 import SchemePieChart from '../../components/SchemePieChart';
@@ -482,7 +482,7 @@ const SuperAdminDashboard = () => {
                 </div>
                 <div style={{ width: '100%' }}>
                   <div className="stat-number" style={{ color: 'var(--color-saffron)' }}>
-                    {voters.length || totalApplications || 2}
+                    {voters ? voters.length : (totalApplications || 0)}
                   </div>
                   <div className="stat-label">Total Candidate Leads</div>
                   <div className="stat-sub" style={{ color: 'var(--color-saffron)', fontWeight: '600' }}>Active Candidate Applications</div>
@@ -510,7 +510,7 @@ const SuperAdminDashboard = () => {
                 </div>
                 <div style={{ width: '100%' }}>
                   <div className="stat-number" style={{ color: '#16a34a', fontSize: '20px' }}>
-                    Thiruvallur
+                    {districtFilter || 'All Districts'}
                   </div>
                   <div className="stat-label">District Scope</div>
                   <div className="stat-sub">Active Registration District</div>
@@ -524,7 +524,7 @@ const SuperAdminDashboard = () => {
                 </div>
                 <div style={{ width: '100%' }}>
                   <div className="stat-number" style={{ color: '#9333ea', fontSize: '20px' }}>
-                    2 Positions
+                    {voters && voters.length > 0 ? `${new Set(voters.map(v => v.position || v.applications?.[0]?.schemeName)).size} Position(s)` : '0 Positions'}
                   </div>
                   <div className="stat-label">Positions Contested</div>
                   <div className="stat-sub">Town Panchayat, Ward Member</div>
@@ -549,7 +549,7 @@ const SuperAdminDashboard = () => {
                   className="btn-action btn-view"
                   style={{ padding: '8px 18px', fontSize: '13px', fontWeight: '700', background: 'var(--color-saffron)', color: '#fff' }}
                 >
-                  View All Applications ({voters.length || 2}) →
+                  View All Applications ({voters ? voters.length : 0}) →
                 </button>
               </div>
 
@@ -1256,6 +1256,301 @@ const SuperAdminDashboard = () => {
         )
       )}
 
+      {/* ══════════════════════════════════════════ */}
+      {/* PAGE: DISTRICT ORGANISERS MANAGEMENT       */}
+      {/* ══════════════════════════════════════════ */}
+      {subPage === 'organisers' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          
+          {/* Header Card */}
+          <div style={{
+            background: 'linear-gradient(135deg, #1B5E20 0%, #2E7D32 100%)',
+            color: '#ffffff',
+            borderRadius: '16px',
+            padding: '28px 32px',
+            boxShadow: '0 8px 24px rgba(27, 94, 32, 0.2)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '8px' }}>
+              <ShieldCheck size={28} color="#FF9933" />
+              <h2 style={{ fontSize: '22px', fontWeight: '800', margin: 0, color: '#ffffff' }}>
+                District Election Organisers
+              </h2>
+            </div>
+            <p style={{ fontSize: '14px', color: '#E8F5E9', margin: 0, lineHeight: 1.5 }}>
+              District Organisers have full administrative authority across Steps 1 to 13, including Cloudinary media inspection (Photo, MP4 Pitch Video, PDF/Word Bio-Data), field corrections, and candidate application management.
+            </p>
+          </div>
+
+          {/* Organiser Permissions Matrix Card */}
+          <div className="campsite-card" style={{ width: '100%', padding: '24px', boxSizing: 'border-box' }}>
+            <h3 style={{ fontSize: '16px', fontWeight: '800', color: '#1B5E20', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              🛡️ DISTRICT ORGANISER PERMISSIONS & AUTHORITIES (STEPS 1 – 13)
+            </h3>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px' }}>
+              <div style={{ backgroundColor: '#F1F8E9', padding: '16px', borderRadius: '12px', border: '1px solid #C8E6C9' }}>
+                <div style={{ fontWeight: 800, color: '#2E7D32', fontSize: '14px', marginBottom: '6px' }}>
+                  1. 👁️ Full Steps 1-13 Inspection
+                </div>
+                <div style={{ fontSize: '12.5px', color: '#424242', lineHeight: 1.4 }}>
+                  Inspect candidate voter EPIC details, Local Body ward choices, work experience, ward winning strategy, and extra questions.
+                </div>
+              </div>
+
+              <div style={{ backgroundColor: '#FFF3E0', padding: '16px', borderRadius: '12px', border: '1px solid #FFE0B2' }}>
+                <div style={{ fontWeight: 800, color: '#E65100', fontSize: '14px', marginBottom: '6px' }}>
+                  2. ☁️ Cloudinary Media Stream
+                </div>
+                <div style={{ fontSize: '12.5px', color: '#424242', lineHeight: 1.4 }}>
+                  Inspect candidate photo (10MB limit), play MP4 pitch video in-browser, and view PDF/Word profile document streams.
+                </div>
+              </div>
+
+              <div style={{ backgroundColor: '#E3F2FD', padding: '16px', borderRadius: '12px', border: '1px solid #BBDEFB' }}>
+                <div style={{ fontWeight: 800, color: '#1565C0', fontSize: '14px', marginBottom: '6px' }}>
+                  3. ✏️ Organiser Edit Rights
+                </div>
+                <div style={{ fontSize: '12.5px', color: '#424242', lineHeight: 1.4 }}>
+                  Organisers can update candidate fields or replace uploaded photos/documents if candidate made a mistake.
+                </div>
+              </div>
+
+              <div style={{ backgroundColor: '#FFEBEE', padding: '16px', borderRadius: '12px', border: '1px solid #FFCDD2' }}>
+                <div style={{ fontWeight: 800, color: '#C62828', fontSize: '14px', marginBottom: '6px' }}>
+                  4. 🗑️ Application Delete Authority
+                </div>
+                <div style={{ fontSize: '12.5px', color: '#424242', lineHeight: 1.4 }}>
+                  Organisers can remove/delete invalid or duplicate registrations from the district database.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Active Organisers List */}
+          <div className="campsite-card" style={{ width: '100%', padding: '24px', boxSizing: 'border-box' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ fontSize: '17px', fontWeight: '800', color: '#0f172a', margin: 0 }}>
+                District Organisers Credentials & Assign List
+              </h3>
+              <button
+                onClick={() => navigateSubPage('credentials')}
+                className="btn btn-filled"
+                style={{ padding: '8px 16px', fontSize: '13px', backgroundColor: '#1B5E20' }}
+              >
+                + Create New District Organiser
+              </button>
+            </div>
+
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13.5px' }}>
+                <thead>
+                  <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0', textAlign: 'left' }}>
+                    <th style={{ padding: '12px 14px', fontWeight: 800, color: '#475569' }}>District Jurisdiction</th>
+                    <th style={{ padding: '12px 14px', fontWeight: 800, color: '#475569' }}>Organiser Username</th>
+                    <th style={{ padding: '12px 14px', fontWeight: 800, color: '#475569' }}>Assigned Role</th>
+                    <th style={{ padding: '12px 14px', fontWeight: 800, color: '#475569' }}>Status</th>
+                    <th style={{ padding: '12px 14px', fontWeight: 800, color: '#475569', textAlign: 'right' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {districtCredentials.length > 0 ? (
+                    districtCredentials.map((dist, idx) => {
+                      const displayDist = dist.district || dist.districtName || (dist.username ? dist.username.replace(/_admin$/i, '').toUpperCase() : 'DISTRICT');
+                      return (
+                        <tr key={idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                          <td style={{ padding: '12px 14px', fontWeight: 800, color: '#0f172a', textTransform: 'capitalize' }}>{displayDist}</td>
+                          <td style={{ padding: '12px 14px', fontFamily: 'monospace', fontWeight: 700, color: '#1565C0' }}>{dist.username}</td>
+                          <td style={{ padding: '12px 14px' }}>
+                            <span style={{ backgroundColor: '#E8F5E9', color: '#1B5E20', padding: '4px 10px', borderRadius: '12px', fontSize: '11.5px', fontWeight: 800 }}>
+                              DISTRICT ORGANISER
+                            </span>
+                          </td>
+                          <td style={{ padding: '12px 14px', color: '#2E7D32', fontWeight: 700 }}>Active</td>
+                          <td style={{ padding: '12px 14px', textAlign: 'right' }}>
+                            <button
+                              onClick={() => { setDistrictFilter(displayDist); navigateSubPage('applications'); }}
+                              style={{ backgroundColor: '#FF6600', color: '#ffffff', border: 'none', padding: '6px 12px', borderRadius: '6px', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}
+                            >
+                              View District Applications →
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  ) : (
+                    <tr>
+                      <td colSpan={5} style={{ padding: '24px', textAlign: 'center', color: '#888888', fontSize: '13px' }}>
+                        Loading district organiser credentials list...
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════ */}
+      {/* PAGE: ORGANISER CREDENTIALS                */}
+      {/* ══════════════════════════════════════════ */}
+      {subPage === 'credentials' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          
+          {/* Simple Header Banner */}
+          <div style={{
+            backgroundColor: '#FFFFFF',
+            border: '1.5px solid #FFE0B2',
+            borderRadius: '16px',
+            padding: '24px 28px',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.04)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '16px'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+              <div style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: '12px',
+                backgroundColor: '#FFF3E0',
+                color: '#FF6600',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '24px',
+                fontWeight: 800
+              }}>
+                🔑
+              </div>
+              <div>
+                <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#1A1A1A', margin: 0 }}>
+                  District Organisers Login Credentials (மாவட்ட அமைப்பாளர் உள்நுழைவு)
+                </h2>
+                <p style={{ fontSize: '13px', color: '#666666', margin: '4px 0 0 0', fontWeight: 500 }}>
+                  Organisers can log in using these accounts to view, edit, inspect Cloudinary media, or delete candidate registrations.
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => navigateSubPage('organisers')}
+              style={{
+                backgroundColor: '#1B5E20',
+                color: '#FFFFFF',
+                border: 'none',
+                padding: '10px 20px',
+                borderRadius: '10px',
+                fontSize: '13px',
+                fontWeight: 800,
+                cursor: 'pointer',
+                boxShadow: '0 3px 10px rgba(27, 94, 32, 0.2)'
+              }}
+            >
+              🛡️ View Organiser Roles & Permissions →
+            </button>
+          </div>
+
+          {/* Simple Organisers Cards Grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
+            {districtCredentials.map((dc, idx) => (
+              <div
+                key={idx}
+                style={{
+                  backgroundColor: '#FFFFFF',
+                  borderRadius: '14px',
+                  border: '1.5px solid #E0E0E0',
+                  padding: '20px',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <div>
+                  {/* Card Header Badge */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                    <span style={{
+                      backgroundColor: '#FFF3E0',
+                      color: '#E65100',
+                      fontSize: '11px',
+                      fontWeight: 800,
+                      padding: '4px 10px',
+                      borderRadius: '12px',
+                      textTransform: 'uppercase'
+                    }}>
+                      🛡️ DISTRICT ORGANISER
+                    </span>
+                    <span style={{ fontSize: '12px', color: '#2E7D32', fontWeight: 700 }}>
+                      ● Active
+                    </span>
+                  </div>
+
+                  <h3 style={{ fontSize: '17px', fontWeight: 800, color: '#1A1A1A', margin: '0 0 14px 0' }}>
+                    {dc.districtName} District
+                  </h3>
+
+                  {/* Login Credentials Box */}
+                  <div style={{ backgroundColor: '#F8FAFC', borderRadius: '10px', padding: '12px 14px', border: '1px solid #E2E8F0', marginBottom: '14px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                      <span style={{ fontSize: '12px', color: '#64748B', fontWeight: 600 }}>Username:</span>
+                      <span style={{ fontSize: '13.5px', fontFamily: 'monospace', fontWeight: 800, color: '#1565C0' }}>
+                        {dc.username}
+                      </span>
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '12px', color: '#64748B', fontWeight: 600 }}>Password:</span>
+                      <span style={{ fontSize: '13.5px', fontFamily: 'monospace', fontWeight: 800, color: '#2E7D32' }}>
+                        {dc.password || 'BJP@2026'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Permissions Pills */}
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '16px' }}>
+                    <span style={{ backgroundColor: '#E8F5E9', color: '#1B5E20', fontSize: '11px', fontWeight: 700, padding: '3px 8px', borderRadius: '6px' }}>
+                      ✓ Steps 1–13 Edit Rights
+                    </span>
+                    <span style={{ backgroundColor: '#FFF3E0', color: '#E65100', fontSize: '11px', fontWeight: 700, padding: '3px 8px', borderRadius: '6px' }}>
+                      ✓ Photo / MP4 / PDF Streaming
+                    </span>
+                    <span style={{ backgroundColor: '#FFEBEE', color: '#C62828', fontSize: '11px', fontWeight: 700, padding: '3px 8px', borderRadius: '6px' }}>
+                      ✓ Delete Registrations
+                    </span>
+                  </div>
+                </div>
+
+                {/* Card Action Button */}
+                <button
+                  onClick={() => { setDistrictFilter(dc.districtName); navigateSubPage('applications'); }}
+                  style={{
+                    width: '100%',
+                    backgroundColor: '#FF6600',
+                    color: '#FFFFFF',
+                    border: 'none',
+                    padding: '10px',
+                    borderRadius: '8px',
+                    fontSize: '13px',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    boxShadow: '0 3px 10px rgba(255, 102, 0, 0.2)',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  Manage Candidate Applications (Steps 1–13) →
+                </button>
+              </div>
+            ))}
+          </div>
+
+        </div>
+      )}
+
       {/* PAGE: BOOTH PRESIDENT REQUESTS */}
       {subPage === 'booth_presidents' && (
         <BoothPresidentRequestsView admin={admin} />
@@ -1289,3 +1584,4 @@ const SuperAdminDashboard = () => {
 };
 
 export default SuperAdminDashboard;
+

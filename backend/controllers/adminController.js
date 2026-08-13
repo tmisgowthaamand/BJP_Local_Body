@@ -632,8 +632,18 @@ const getApplicationsList = async (req, res) => {
       whatsappNo: enq.whatsapp_no || enq.mobile || '',
       telegramUrl: enq.telegram_url || '',
       websiteUrl: enq.website_url || '',
+      photo_url: enq.photo_url || enq.photoUrl || enq.photo || '',
+      photoUrl: enq.photo_url || enq.photoUrl || enq.photo || '',
+      video_url: enq.video_url || enq.videoUrl || enq.video || enq.pitch_url || '',
+      videoUrl: enq.video_url || enq.videoUrl || enq.video || enq.pitch_url || '',
+      profile_document_url: enq.profile_document_url || enq.profileDocumentUrl || enq.profile_doc || '',
+      profileDocumentUrl: enq.profile_document_url || enq.profileDocumentUrl || enq.profile_doc || '',
+      win_strategy: enq.win_strategy || '',
+      gov_profile: enq.gov_profile || '',
       role: enq.role || 'confirmed',
       party: enq.party || 'BJP',
+      organiser_requests: enq.organiser_requests || enq.organiserRequests || [],
+      organiserRequests: enq.organiser_requests || enq.organiserRequests || [],
       applications: [{
         _id: enq._id,
         applicationId: enq.application_id || `BJP2026-${(enq.mobile || '').slice(-6)}`,
@@ -648,7 +658,14 @@ const getApplicationsList = async (req, res) => {
         voterName: enq.full_name,
         gender: enq.gender || 'Female',
         position: enq.position,
-        bodyType: enq.body_type
+        bodyType: enq.body_type,
+        photo_url: enq.photo_url || enq.photoUrl || enq.photo || '',
+        video_url: enq.video_url || enq.videoUrl || enq.video || enq.pitch_url || '',
+        profile_document_url: enq.profile_document_url || enq.profileDocumentUrl || enq.profile_doc || '',
+        win_strategy: enq.win_strategy || '',
+        gov_profile: enq.gov_profile || '',
+        organiser_requests: enq.organiser_requests || enq.organiserRequests || [],
+        organiserRequests: enq.organiser_requests || enq.organiserRequests || []
       }]
     }));
 
@@ -713,6 +730,88 @@ const updateApplicationStatus = async (req, res) => {
     });
   } catch (error) {
     console.error('[Admin API Error]:', error);
+    return res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
+// @desc    Update Full Candidate Details by District Organiser (Steps 1-13)
+// @route   PUT /api/admin/applications/:id/update-candidate
+// @access  Private (Admin)
+const updateCandidateByOrganiser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+
+    const Enquiry = require('../models/Enquiry');
+    const { deleteImage, publicIdFromUrl } = require('../services/cloudinaryService');
+
+    const mongoose = require('mongoose');
+    let doc = null;
+    if (mongoose.Types.ObjectId.isValid(id)) {
+      doc = await Enquiry.findById(id);
+    }
+    if (!doc) {
+      doc = await Enquiry.findOne({ $or: [{ application_id: id }, { mobile: id }] });
+    }
+
+    if (!doc) {
+      return res.status(404).json({ success: false, message: 'Candidate registration record not found' });
+    }
+
+    // Cloudinary cleanup if photo_url is replaced
+    if (updateData.photo_url && updateData.photo_url !== doc.photo_url) {
+      if (doc.photo_url) {
+        const oldPubId = publicIdFromUrl(doc.photo_url);
+        if (oldPubId) await deleteImage(oldPubId);
+      }
+      doc.photo_url = updateData.photo_url;
+    }
+
+    // Cloudinary cleanup if video_url is replaced
+    if (updateData.video_url && updateData.video_url !== doc.video_url) {
+      if (doc.video_url && doc.video_url.includes('cloudinary.com')) {
+        const oldPubId = publicIdFromUrl(doc.video_url);
+        if (oldPubId) await deleteImage(oldPubId);
+      }
+      doc.video_url = updateData.video_url;
+    }
+
+    // Cloudinary cleanup if profile_document_url is replaced
+    if (updateData.profile_document_url && updateData.profile_document_url !== doc.profile_document_url) {
+      if (doc.profile_document_url) {
+        const oldPubId = publicIdFromUrl(doc.profile_document_url);
+        if (oldPubId) await deleteImage(oldPubId);
+      }
+      doc.profile_document_url = updateData.profile_document_url;
+    }
+
+    // Update position and 12-step fields
+    if (updateData.position) doc.position = updateData.position;
+    if (updateData.body_type) doc.body_type = updateData.body_type;
+    if (updateData.full_name || updateData.voterName) doc.full_name = updateData.full_name || updateData.voterName;
+    if (updateData.voter_epic || updateData.epicNo) doc.voter_epic = updateData.voter_epic || updateData.epicNo;
+    if (updateData.ward_number || updateData.wardNumber) doc.ward_number = updateData.ward_number || updateData.wardNumber;
+    if (updateData.union_or_municipality || updateData.unionOrMunicipality) doc.union_or_municipality = updateData.union_or_municipality || updateData.unionOrMunicipality;
+    if (updateData.panchayat_or_corporation || updateData.panchayatOrCorporation) doc.panchayat_or_corporation = updateData.panchayat_or_corporation || updateData.panchayatOrCorporation;
+    if (updateData.district) doc.district = updateData.district;
+    if (updateData.work_experience !== undefined) doc.work_experience = updateData.work_experience;
+    if (updateData.local_understanding !== undefined) doc.local_understanding = updateData.local_understanding;
+    if (updateData.win_strategy !== undefined) doc.win_strategy = updateData.win_strategy;
+    if (updateData.gov_profile !== undefined) doc.gov_profile = updateData.gov_profile;
+    if (updateData.bjp_membership_id !== undefined) doc.bjp_membership_id = updateData.bjp_membership_id;
+
+    doc.updated_by_organiser = `${req.admin.role} (${req.admin.username})`;
+
+    await doc.save();
+    invalidateStatsCache();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Candidate details updated successfully in MongoDB & Cloudinary',
+      voter: doc
+    });
+  } catch (error) {
+    console.error('[updateCandidateByOrganiser Error]:', error);
     return res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };
@@ -1363,6 +1462,7 @@ module.exports = {
   exportApplicationsExcel,
   getFilterMeta,
   updateApplicationStatus,
+  updateCandidateByOrganiser,
   createAdminCredential,
   getAllAdmins,
   getBoothVoterRoll

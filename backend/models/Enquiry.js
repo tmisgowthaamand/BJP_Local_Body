@@ -118,12 +118,68 @@ const enquirySchema = new mongoose.Schema({
     required: true,
     unique: true
   },
+  photo_url: {
+    type: String,
+    default: ''
+  },
+  video_url: {
+    type: String,
+    default: ''
+  },
+  win_strategy: {
+    type: String,
+    default: ''
+  },
+  gov_profile: {
+    type: String,
+    default: ''
+  },
+  extra_question_1: {
+    type: String,
+    default: ''
+  },
+  extra_question_2: {
+    type: String,
+    default: ''
+  },
+  profile_document_url: {
+    type: String,
+    default: ''
+  },
+  bjp_membership_link_clicked: {
+    type: Boolean,
+    default: false
+  },
+  is_locked: {
+    type: Boolean,
+    default: true
+  },
+  cloudinary_folder: {
+    type: String,
+    default: ''
+  },
+  updated_by_organiser: {
+    type: String,
+    default: ''
+  },
+  updated_at_organiser: {
+    type: Date
+  },
+  organiser_requests: [{
+    request_id: { type: String },
+    request_type: { type: String, default: 'Correction / Document Update' },
+    message: { type: String, required: true },
+    status: { type: String, default: 'Pending' },
+    created_at: { type: Date, default: Date.now }
+  }],
   created_at: {
     type: Date,
     default: Date.now
   }
+
 }, {
-  collection: 'tbl_enquiry'
+  collection: 'tbl_enquiry',
+  strict: false
 });
 
 module.exports = mongoose.model('Enquiry', enquirySchema);

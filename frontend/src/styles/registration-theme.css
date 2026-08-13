@@ -392,7 +392,7 @@ textarea {
   line-height: 1.35;
 }
 
-/* Universal Step Container Card */
+/* Universal Step Container Card with Custom Executive Scrollbar */
 .step-card-container {
   background-color: #FFFFFF;
   border-radius: 16px;
@@ -403,14 +403,37 @@ textarea {
   border-bottom: 1px solid #FFE0B2;
   border-top: 4px solid #FF6600;
   width: 100%;
+  max-height: 78vh;
+  overflow-y: auto !important;
+  overflow-x: hidden;
   box-sizing: border-box !important;
-  overflow: hidden;
+  scroll-behavior: smooth;
+}
+
+/* Custom Executive Scrollbar Styling */
+.step-card-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.step-card-container::-webkit-scrollbar-track {
+  background: #FFF3E0;
+  border-radius: 10px;
+}
+
+.step-card-container::-webkit-scrollbar-thumb {
+  background: #FF6600;
+  border-radius: 10px;
+}
+
+.step-card-container::-webkit-scrollbar-thumb:hover {
+  background: #E65100;
 }
 
 @media (max-width: 600px) {
   .step-card-container {
     padding: 16px 12px !important;
     border-radius: 14px !important;
+    max-height: 82vh;
   }
 }
 
@@ -424,7 +447,7 @@ textarea {
   box-shadow: 0 4px 16px rgba(255, 102, 0, 0.06);
   width: 100%;
   box-sizing: border-box !important;
-  overflow: hidden;
+  overflow: visible;
 }
 
 @media (max-width: 480px) {

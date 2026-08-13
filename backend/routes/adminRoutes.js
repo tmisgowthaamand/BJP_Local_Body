@@ -13,6 +13,7 @@ const {
   exportApplicationsExcel,
   getFilterMeta,
   updateApplicationStatus,
+  updateCandidateByOrganiser,
   createAdminCredential,
   getAllAdmins,
   getBoothVoterRoll
@@ -41,6 +42,7 @@ router.get('/booth-voter-roll', protectAdmin, getBoothVoterRoll);
 router.get('/export-csv', protectAdmin, exportApplicationsCsv);
 router.get('/export-excel', protectAdmin, exportApplicationsExcel);
 router.put('/applications/:id/status', protectAdmin, updateApplicationStatus);
+router.put('/applications/:id/update-candidate', protectAdmin, updateCandidateByOrganiser);
 router.post('/create-credential', protectAdmin, authorizeRoles('SUPER_ADMIN'), createAdminCredential);
 router.get('/credentials', protectAdmin, authorizeRoles('SUPER_ADMIN'), getAllAdmins);
 

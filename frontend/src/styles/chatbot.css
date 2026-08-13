@@ -1244,8 +1244,8 @@
 
 .chatbot-app.bjp-theme .left-menu-header {
   height: 64px;
-  background: linear-gradient(90deg, #FF6600 0%, #FF8C00 60%, #2E7D32 85%, #1B5E20 100%) !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  background: linear-gradient(90deg, #D84315 0%, #FF6600 50%, #1B5E20 100%) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.25);
   padding: 0 16px;
   display: flex;
   align-items: center;
@@ -1272,19 +1272,22 @@
 }
 
 .chatbot-app.bjp-theme .left-menu-brand {
-  font-size: 13.5px;
+  font-size: 14px;
   font-weight: 800;
-  color: #FFFFFF;
+  color: #FFFFFF !important;
   letter-spacing: 0.03em;
   font-family: 'Barlow Condensed', sans-serif !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
 }
 
 .chatbot-app.bjp-theme .left-menu-status {
-  font-size: 10px;
-  color: #E8F5E9;
+  font-size: 11px;
+  font-weight: 700;
+  color: #FFFFFF !important;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
 }
 
 .chatbot-app.bjp-theme .left-menu-header-actions {
@@ -1602,10 +1605,12 @@
 }
 
 /* Stepper tweaks */
-/* Chat Header tweaks */
+/* Chat Header tweaks for Mobile and Desktop */
 .chatbot-app.bjp-theme .chat-header {
-  background-color: var(--color-carbon);
-  border-bottom: 2px solid var(--color-signal-mint); /* Dark green accent line like card */
+  background: linear-gradient(90deg, #D84315 0%, #FF6600 55%, #1B5E20 100%) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.25) !important;
+  padding: 12px 16px !important;
+  color: #FFFFFF !important;
 }
 @media (min-width: 1201px) {
   .chatbot-app.bjp-theme .chat-header {
@@ -1613,20 +1618,36 @@
   }
 }
 .chatbot-app.bjp-theme .chat-header-name {
-  font-weight: 700;
-  color: var(--color-signal-mint);
-  letter-spacing: 0.05em;
+  font-weight: 800 !important;
+  color: #FFFFFF !important;
+  letter-spacing: 0.03em !important;
+  font-size: 14px !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5) !important;
 }
 .chatbot-app.bjp-theme .chat-header-status {
-  color: var(--color-ash);
+  color: #FFFFFF !important;
+  font-weight: 700 !important;
+  font-size: 11px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4) !important;
+}
+.chatbot-app.bjp-theme .status-dot-green {
+  width: 8px !important;
+  height: 8px !important;
+  border-radius: 50% !important;
+  background-color: #00FF66 !important;
+  box-shadow: 0 0 6px #00FF66 !important;
+  display: inline-block !important;
 }
 .chatbot-app.bjp-theme .chat-header-btn {
-  border-color: rgba(255, 102, 0, 0.2);
-  color: var(--color-signal-mint);
+  border-color: rgba(255, 255, 255, 0.3) !important;
+  color: #FFFFFF !important;
 }
 .chatbot-app.bjp-theme .chat-header-btn:hover {
-  background-color: rgba(255, 102, 0, 0.05);
-  border-color: var(--color-signal-mint);
+  background-color: rgba(255, 255, 255, 0.15) !important;
+  border-color: #FFFFFF !important;
 }
 
 .mobile-menu-btn {
@@ -1655,11 +1676,14 @@
     padding: 10px 12px !important;
   }
   .chat-header-name {
-    font-size: 13px !important;
-    line-height: 1.2 !important;
+    font-size: 13.5px !important;
+    line-height: 1.25 !important;
+    color: #FFFFFF !important;
+    font-weight: 800 !important;
   }
   .chat-header-status {
     font-size: 11px !important;
+    color: #FFFFFF !important;
   }
   .mobile-menu-btn {
     width: 36px !important;

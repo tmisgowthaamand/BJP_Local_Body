@@ -10,7 +10,8 @@ const getApiBaseUrl = () => {
 };
 
 const API = axios.create({
-  baseURL: getApiBaseUrl()
+  baseURL: getApiBaseUrl(),
+  timeout: 300000 // 5 minutes timeout for 100MB HD video pitch uploads to Cloudinary
 });
 
 // Interceptor to attach User or Admin JWT token

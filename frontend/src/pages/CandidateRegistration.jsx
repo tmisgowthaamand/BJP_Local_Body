@@ -14,8 +14,9 @@ import Step07_Position from '../components/registration/steps/Step07_Position';
 import Step08_SocialMedia from '../components/registration/steps/Step08_SocialMedia';
 import Step09_WorkExperience from '../components/registration/steps/Step09_WorkExperience';
 import Step10_LocalUnderstanding from '../components/registration/steps/Step10_LocalUnderstanding';
-import Step11_Review from '../components/registration/steps/Step11_Review';
-import Step12_Submit from '../components/registration/steps/Step12_Submit';
+import Step11_CandidateProfileDoc from '../components/registration/steps/Step11_CandidateProfileDoc';
+import Step12_Review from '../components/registration/steps/Step12_Review';
+import Step13_Submit from '../components/registration/steps/Step13_Submit';
 
 import '../styles/registration-theme.css';
 
@@ -44,9 +45,11 @@ const StepRenderer = () => {
     case 10:
       return <Step10_LocalUnderstanding />;
     case 11:
-      return <Step11_Review />;
+      return <Step11_CandidateProfileDoc />;
     case 12:
-      return <Step12_Submit />;
+      return <Step12_Review />;
+    case 13:
+      return <Step13_Submit />;
     default:
       return <Step01_Mobile />;
   }

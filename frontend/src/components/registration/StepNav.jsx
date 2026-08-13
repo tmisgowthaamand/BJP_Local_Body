@@ -12,8 +12,8 @@ const StepNav = ({ onNext, nextDisabled = false, nextText = 'Next →', showBack
     nextStep();
   };
 
-  if (state.step === 12) {
-    return null; // Step 12 renders its own submission / completion actions
+  if (state.step === 13) {
+    return null; // Step 13 is the final submission & receipt screen
   }
 
   return (

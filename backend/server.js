@@ -71,13 +71,15 @@ app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 // Capture the raw body ONLY for the WhatsApp webhook so we can verify Meta's
 // X-Hub-Signature-256 HMAC. All other routes just get parsed JSON.
 app.use(express.json({
-  limit: '8mb',
+  limit: '150mb',
   verify: (req, _res, buf) => {
     if (req.originalUrl && req.originalUrl.startsWith('/api/whatsapp/webhook')) {
       req.rawBody = buf.toString();
     }
   },
 }));
+const path = require('path');
+app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 
 // Behind nginx: trust the first proxy hop so rate-limit / logging see the real
 // client IP from X-Forwarded-For.
@@ -151,7 +153,7 @@ app.get('/', (req, res) => {
 const registrationRoutes = require('./routes/registrations');
 
 // API Routes
-app.use('/api/registrations', registrationRoutes);
+app.use(['/api/registrations', '/api/register'], registrationRoutes);
 app.use('/api', userChatRoutes);
 app.use('/api/booth-president', boothPresidentRoutes);
 app.use('/api/voter', voterRoutes);
